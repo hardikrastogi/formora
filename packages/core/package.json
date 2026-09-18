@@ -1,6 +1,6 @@
 {
   "name": "@hardikrastogi/core",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Schema types, validation engine, and versioning for Formora form definitions and submissions.",
   "license": "MIT",
   "type": "module",
@@ -20,14 +20,16 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "zod": "^3.23.0"
   },
   "devDependencies": {
     "tsup": "^8.3.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
   },
   "publishConfig": {
     "access": "public"
