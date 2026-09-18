@@ -15,29 +15,30 @@ Paced for ~1–2 hours/day. Each phase ends with something working/demoable befo
 - [x] First build via tsup succeeded (ESM + CJS + `.d.ts`)
 - [x] First publish succeeded: `@hardikrastogi/core@0.0.1` is live on npm
 
-**Remaining before moving on:**
-- [ ] First git commit (local only — GitHub push deferred by choice)
-- [ ] `pnpm changeset init` — set up version/changelog workflow
+- [x] First git commit (local only — GitHub push deferred by choice)
+- [x] `pnpm changeset init` — set up version/changelog workflow
+
+**Phase 0 complete.**
 
 ---
 
-## Phase 1 — `@hardikrastogi/core`: Schema & Validation Engine (Weeks 2–4)
+## Phase 1 — `@hardikrastogi/core`: Schema & Validation Engine (Weeks 2–4) ✅ DONE
 
 The foundation everything else depends on. No UI yet — pure TypeScript + Zod.
 
-- [ ] Define `FormDefinition` Zod schema
-  - [ ] `fields` — array of field configs (id, type, label, validation rules, defaultProps)
-  - [ ] `layout` — 12-column grid (`rows: [{ columns: [{ span, fieldId }] }]`)
-  - [ ] `theme` — token object (`colors`, `radius`, `font`, `density`)
-  - [ ] `logic` — conditional visibility rules (`visibleIf`), calculated fields
-  - [ ] top-level metadata: `id`, `name`, `version`/`schemaVersion`, `createdAt`, `updatedAt`
-- [ ] Define `FormSubmission` Zod schema
-  - [ ] `{ formId, schemaVersion, answers, meta }`
-- [ ] Field-type plugin interface: `{ type, schema, defaultProps, Editor, Renderer, validate }`
-- [ ] Validation engine: given a `FormDefinition` + answers, return pass/fail + field-level errors
-- [ ] Schema versioning logic (so old submissions still validate/render against their original schema version)
-- [ ] Vitest unit tests for schema validation (valid/invalid cases per field type)
-- [ ] Bump + publish `@hardikrastogi/core@0.1.0` once schemas are stable
+- [x] Define `FormDefinition` Zod schema
+  - [x] `fields` — array of field configs (id, type, label, validation rules, defaultProps)
+  - [x] `layout` — 12-column grid (`rows: [{ columns: [{ span, fieldId }] }]`)
+  - [x] `theme` — token object (`colors`, `radius`, `font`, `density`)
+  - [x] `logic` — conditional visibility rules (`visibleIf`), calculated fields
+  - [x] top-level metadata: `id`, `name`, `version`/`schemaVersion`, `createdAt`, `updatedAt`
+- [x] Define `FormSubmission` Zod schema
+  - [x] `{ formId, schemaVersion, answers, meta }`
+- [x] Field-type plugin interface: `{ type, schema, defaultProps, Editor, Renderer, validate }`
+- [x] Validation engine: given a `FormDefinition` + answers, return pass/fail + field-level errors
+- [x] Schema versioning logic (so old submissions still validate/render against their original schema version)
+- [x] Vitest unit tests for schema validation (valid/invalid cases per field type)
+- [x] Bump + publish `@hardikrastogi/core@0.1.0` once schemas are stable
 
 **Milestone:** you can construct a `FormDefinition` object by hand, validate a fake submission against it, and see real pass/fail output — all in a test file, no UI required yet.
 
@@ -97,6 +98,7 @@ The actual "form builder" experience.
 
 ## Phase 5 — Hosted Forms (Weeks 15–17)
 
+- [ ] Auth: Auth.js (NextAuth v5) with Google OAuth, using its MongoDB adapter (decided — not in original tech stack table)
 - [ ] MongoDB Atlas (M0 free tier) connected via Mongoose — app-layer only
 - [ ] `/f/[slug]` public form page in `apps/web`
 - [ ] Submission API route: validate against `core`'s Zod schema, then persist via Mongoose
