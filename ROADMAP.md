@@ -96,31 +96,67 @@ The actual "form builder" experience.
 
 ---
 
-## Phase 5 — Hosted Forms (Weeks 15–17)
+## Phase 5 — Hosted Forms, Sharing & Response Management (Weeks 15–22)
 
-- [ ] Auth: Auth.js (NextAuth v5) with Google OAuth, using its MongoDB adapter (decided — not in original tech stack table)
-- [ ] MongoDB Atlas (M0 free tier) connected via Mongoose — app-layer only
-- [ ] `/f/[slug]` public form page in `apps/web`
-- [ ] Submission API route: validate against `core`'s Zod schema, then persist via Mongoose
-- [ ] OG meta tags on `/f/[slug]` for link-preview sharing
+This phase turns Formora into a Google Forms alternative: creators publish forms, share a link through WhatsApp/email/any app, and respondents can complete the form without first creating a Formora account.
+
+### Creator accounts and publishing
+
+- [ ] Auth.js (NextAuth v5) with standard sign-up/sign-in plus optional Google OAuth, using its MongoDB adapter
+- [ ] MongoDB Atlas connected via Mongoose — app-layer only
 - [ ] Save-state indicator wired to real autosave (debounced PATCH as the builder edits)
+- [ ] Publish/unpublish controls and a stable, unique `/f/[slug]` shareable URL
+- [ ] Share action that copies the URL and opens the device share sheet when supported
+- [ ] OG meta tags on `/f/[slug]` for useful WhatsApp, email, and social link previews
+- [ ] Preserve the published `schemaVersion` so each response remains tied to the exact form version that was submitted
 
-**Milestone:** you can build a form, get a share link, have someone else fill it out, and see the submission land in MongoDB.
+### Public respondent experience
+
+- [ ] Render the exact published form at `/f/[slug]` without requiring a Formora account
+- [ ] Let the creator choose one access mode per form:
+  - [ ] `anyone` — no identity verification required
+  - [ ] `verified_email` — respondent verifies an email magic link before continuing
+  - [ ] `verified_phone` — respondent verifies a phone OTP before continuing
+- [ ] Return verified respondents to the same form and preserve the intended form URL/state
+- [ ] Use short-lived, single-use verification tokens with expiry, resend cooldowns, attempt limits, and abuse rate limits
+- [ ] Submission API route: validate against `core`'s Zod schema, then persist through Mongoose
+- [ ] Show a success dialog after submission: “Your submission has been recorded.”
+- [ ] Store a stable respondent identity reference for verified submissions without forcing the respondent to create an account
+
+### Account continuity and respondent history
+
+- [ ] When a person later creates an account and verifies the same email/phone, safely link their earlier verified respondent identity to the new account
+- [ ] Add a “Your responses” dashboard section showing only the form name and submission date for linked historical submissions
+- [ ] Never link historical submissions using an unverified email/phone typed into an ordinary answer field
+- [ ] Let respondents open a previous response and edit it only when the form creator has enabled response editing
+- [ ] Record `submittedAt`, `updatedAt`, and response revision/audit information when an answer is edited
+
+### Creator response dashboard
+
+- [ ] Add a response dashboard for every owned form with total response count and recent activity
+- [ ] Display responses using server-side pagination/cursor pagination rather than loading all responses at once
+- [ ] Add search, filters, sorting, and an openable response-details drawer/page with complete submitted answers
+- [ ] Add a per-form `allowResponseEditing` setting controlled by the creator
+- [ ] Enforce ownership and authorization on every response-list and response-detail API route
+- [ ] Add database indexes for form ID, respondent identity, submission date, and pagination order
+- [ ] Support large forms (hundreds of thousands of responses) through paginated queries and asynchronous CSV/Excel exports
+
+**Milestone:** a creator can publish and share a form; respondents can submit without creating an account using the creator-selected access mode; later accounts can discover their verified submission history; and creators can safely browse large response sets from their dashboard.
 
 ---
 
-## Phase 6 — Conditional Logic + `@hardikrastogi/kyc` (Weeks 18–22)
+## Phase 6 — Conditional Logic + `@hardikrastogi/kyc` (Weeks 23–27)
 
 - [ ] `visibleIf` conditional field visibility, wired into both renderer and builder Logic tab
 - [ ] Calculated fields (derived values from other answers)
-- [ ] `@hardikrastogi/kyc` package scaffold
+- [ ] `@hardikrastogi/kyc` package scaffold (scope reduced — see note below)
   - [ ] `VerificationProvider` interface + mock provider
-  - [ ] Client-side liveness detection (webcam + randomized gesture prompt)
-  - [ ] Document capture with blur/glare detection
-  - [ ] Face match via face-api.js
+  - [ ] Document image upload field type, with blur/glare detection
   - [ ] OCR via Tesseract.js
   - [ ] Files uploaded to S3/R2 via presigned URLs — submission stores reference + hash only, never raw media
   - [ ] README section documenting this as a deliberate DPDP Act–aware design decision
+
+  > **Scope decision:** Webcam-based liveness detection and face-match (face-api.js) are dropped for now. Different industries use different vendors for video-based identity verification, so building a generic one doesn't fit a plugin-based, industry-agnostic product — that responsibility stays with `VerificationProvider` adapters a real vendor would supply. `kyc` here is scoped to document upload + OCR only.
 
 **Milestone:** the "Customer Feedback" and "Multi-step Survey" templates work end-to-end with conditional logic; "KYC Onboarding" template demonstrates the mock verification flow live.
 
