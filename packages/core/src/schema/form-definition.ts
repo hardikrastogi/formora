@@ -61,3 +61,5 @@ export const FormDefinitionSchema = z
   });
 
 export type FormDefinition = z.infer<typeof FormDefinitionSchema>;
+
+export type FormDefinitionInput = z.input<typeof FormDefinitionSchema>;

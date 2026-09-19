@@ -8,7 +8,12 @@ export interface SubmissionValidationResult {
 
 function validateField(field: FieldConfig, value: unknown): string[] {
   const errors: string[] = [];
-  const isEmpty = value === undefined || value === null || value === "";
+  const isEmpty =
+    value === undefined ||
+    value === null ||
+    value === "" ||
+    value === false ||
+    (Array.isArray(value) && value.length === 0);
 
   if (field.required && isEmpty) {
     errors.push(`"${field.label}" is required`);

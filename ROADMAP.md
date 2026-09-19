@@ -48,16 +48,18 @@ The foundation everything else depends on. No UI yet — pure TypeScript + Zod.
 
 Turns a `FormDefinition` into an actual rendered, fillable form.
 
-- [ ] Package scaffold (same tsup/package.json pattern as `core`)
-- [ ] `react` as peerDependency, depends on `@hardikrastogi/core`
-- [ ] Renderer hook (e.g. `useFormRenderer(definition)`) wired to `react-hook-form`
-- [ ] 8 base field types: text, email, number, select, date, checkbox, radio, textarea
-  - [ ] Each field: unstyled Radix-based component + `.df-*` class names
-- [ ] Theme tokens applied as CSS custom properties on a `.df-form` wrapper
-- [ ] `classNames` prop for per-slot overrides
-- [ ] Prebuilt `styles.css` consumers import once
-- [ ] Basic Playwright test: render a form, fill it, submit, check output shape
-- [ ] Publish `@hardikrastogi/react@0.1.0`
+- [x] Package scaffold (same tsup/package.json pattern as `core`)
+- [x] `react` as peerDependency, depends on `@hardikrastogi/core`
+- [x] Renderer hook (`useFormRenderer(definition)`) wired to `react-hook-form`, plus `<FormRenderer />`
+- [x] 8 base field types: text, email, number, select, date, checkbox, radio, textarea
+  - [x] Each field: unstyled component + `.df-*` class names (Radix for checkbox/radio/label; native `<select>`)
+- [x] Theme tokens applied as CSS custom properties on a `.df-form` wrapper
+- [x] Per-field `style` overrides (added to core `FieldConfig`)
+- [x] `classNames` prop for per-slot overrides
+- [x] Prebuilt `styles.css` consumers import once
+- [x] Component tests: render, fill, submit, validation errors, theming (Vitest + Testing Library, 12 tests)
+- [ ] Real-browser end-to-end test (Playwright) — deferred to Phase 3, needs the playground page as a host
+- [ ] Publish `@hardikrastogi/core@0.2.0` then `@hardikrastogi/react@0.1.0`
 
 **Milestone:** a plain React app (not Next.js) can `npm install` both packages, pass in a hand-written `FormDefinition`, and render a real, fillable, validated form.
 

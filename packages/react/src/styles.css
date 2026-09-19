@@ -1,0 +1,185 @@
+.df-form {
+  --df-primary: #2563eb;
+  --df-bg: #ffffff;
+  --df-text: #111827;
+  --df-muted: #6b7280;
+  --df-border: #d1d5db;
+  --df-danger: #dc2626;
+  --df-radius: 8px;
+  --df-gap: 1rem;
+  --df-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--df-gap);
+  box-sizing: border-box;
+  color: var(--df-text);
+  background: var(--df-bg);
+  font-family: var(--df-font);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.df-form *,
+.df-form *::before,
+.df-form *::after {
+  box-sizing: border-box;
+}
+
+.df-row {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--df-gap);
+}
+
+.df-field {
+  grid-column: span var(--df-span, 12);
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+  color: var(--df-field-text, inherit);
+}
+
+@media (max-width: 640px) {
+  .df-field {
+    grid-column: 1 / -1;
+  }
+}
+
+.df-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.df-required {
+  color: var(--df-danger);
+}
+
+.df-description {
+  margin: 0;
+  color: var(--df-muted);
+  font-size: 0.85rem;
+}
+
+.df-error,
+.df-form-error {
+  margin: 0;
+  color: var(--df-danger);
+  font-size: 0.85rem;
+}
+
+.df-input {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  color: var(--df-field-text, var(--df-text));
+  background: var(--df-field-bg, var(--df-bg));
+  border: 1px solid var(--df-field-border, var(--df-border));
+  border-radius: var(--df-field-radius, var(--df-radius));
+  font: inherit;
+  font-size: var(--df-field-font-size, 1rem);
+}
+
+.df-input:focus-visible,
+.df-submit:focus-visible,
+.df-checkbox:focus-visible,
+.df-radio:focus-visible {
+  outline: 2px solid var(--df-primary);
+  outline-offset: 2px;
+}
+
+.df-input[aria-invalid="true"],
+.df-checkbox[aria-invalid="true"],
+.df-radio-group[aria-invalid="true"] .df-radio {
+  border-color: var(--df-danger);
+}
+
+.df-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.df-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.df-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.df-option-label {
+  cursor: pointer;
+}
+
+.df-checkbox,
+.df-radio {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  padding: 0;
+  flex: none;
+  color: #ffffff;
+  background: var(--df-bg);
+  border: 1px solid var(--df-field-border, var(--df-border));
+  cursor: pointer;
+}
+
+.df-checkbox {
+  border-radius: calc(var(--df-field-radius, var(--df-radius)) / 2);
+}
+
+.df-radio {
+  border-radius: 9999px;
+}
+
+.df-checkbox[data-state="checked"] {
+  background: var(--df-primary);
+  border-color: var(--df-primary);
+}
+
+.df-checkbox-indicator {
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.df-radio[data-state="checked"] {
+  border-color: var(--df-primary);
+}
+
+.df-radio-indicator {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 9999px;
+  background: var(--df-primary);
+}
+
+.df-submit {
+  align-self: flex-start;
+  padding: 0.6rem 1.25rem;
+  color: #ffffff;
+  background: var(--df-primary);
+  border: 0;
+  border-radius: var(--df-radius);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.df-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.df-field-unsupported,
+.df-form-invalid {
+  padding: 0.75rem;
+  color: var(--df-danger);
+  border: 1px dashed var(--df-danger);
+  border-radius: var(--df-radius);
+}

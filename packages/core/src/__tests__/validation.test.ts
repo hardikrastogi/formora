@@ -42,6 +42,20 @@ describe("validateSubmission", () => {
     expect(result.errors.age[0]).toMatch(/at least 18/);
   });
 
+  it("treats an unticked required checkbox and an empty required list as missing", () => {
+    const def: FormDefinition = {
+      ...definition,
+      fields: [
+        { id: "agree", type: "checkbox", label: "Agree", required: true, defaultProps: {} },
+        { id: "tags", type: "multiselect", label: "Tags", required: true, defaultProps: {} },
+      ],
+    };
+    const result = validateSubmission(def, { agree: false, tags: [] });
+    expect(result.success).toBe(false);
+    expect(Object.keys(result.errors).sort()).toEqual(["agree", "tags"]);
+    expect(validateSubmission(def, { agree: true, tags: ["a"] }).success).toBe(true);
+  });
+
   it("allows an optional field to be omitted", () => {
     const result = validateSubmission(definition, { username: "hardik" });
     expect(result.success).toBe(true);

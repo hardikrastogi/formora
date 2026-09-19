@@ -29,6 +29,30 @@ This is pure logic — no network calls, no database, no rendering. Every later 
 
 ---
 
+## `@hardikrastogi/react` Rendering Flow (implemented in Phase 2)
+
+```
+FormDefinition JSON (from anywhere: file, API, builder state)
+   │
+   ▼  FormDefinitionSchema.safeParse        → invalid? show readable error, stop
+   │     (applies defaults, checks ids/layout/logic references)
+   ▼  buildRows                              → layout rows → columns → { field, plugin }
+   │     (fields missing from the layout are appended as full-width rows)
+   ▼  <FormRenderer>  (one <form class="df-form">, theme → CSS variables)
+   │     for each column:  registry.get(field.type).Renderer
+   │        unknown type → "Unsupported field type" placeholder
+   ▼  user types → react-hook-form holds the answers
+   ▼  submit → resolver runs:
+   │     1. core validateSubmission (required / min / max / pattern)
+   │     2. the field type's own validate (e.g. email format)
+   │     errors → shown per field, first invalid field focused, onSubmit NOT called
+   ▼  valid → cleanAnswers → onSubmit({ fieldId: value })
+```
+
+The renderer never talks to a server or database. What happens to the answers after `onSubmit` is the host app's job (in the hosted product: the submission API route, which must validate again on the server).
+
+---
+
 ## High-Level Package Relationship
 
 ```
