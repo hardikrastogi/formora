@@ -38,6 +38,24 @@ describe("FormDefinitionSchema", () => {
     }
   });
 
+  it("accepts a per-field style override and rejects an invalid radius", () => {
+    const ok = baseDefinition();
+    ok.fields[0].style = { textColor: "#111111", radius: "lg" };
+    expect(FormDefinitionSchema.safeParse(ok).success).toBe(true);
+
+    const bad = baseDefinition();
+    bad.fields[0].style = { radius: "huge" as never };
+    expect(FormDefinitionSchema.safeParse(bad).success).toBe(false);
+  });
+
+  it("rejects unsafe field ids", () => {
+    for (const badId of ["a.b", "1abc", "__proto__", "has space", ""]) {
+      const def = baseDefinition();
+      def.fields[0].id = badId;
+      expect(FormDefinitionSchema.safeParse(def).success).toBe(false);
+    }
+  });
+
   it("rejects duplicate field ids", () => {
     const def = baseDefinition();
     def.fields.push({ id: "name", type: "text", label: "Name Again" });
