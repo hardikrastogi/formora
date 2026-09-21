@@ -49,3 +49,29 @@ Each entry: what was done, what it enables, anything worth remembering about how
 **Tests:** 12 component tests (Vitest + Testing Library) plus 13 in core, all passing.
 
 **Not yet done:** real-browser Playwright test (waits for the Phase 3 playground page), and publishing. Nobody has looked at the styled result in a real browser yet.
+
+---
+
+## Phase 3 — Next.js docs site and playground (`apps/web`)
+
+**What was built:**
+- A Next.js 16 (App Router) app with Tailwind 4 and shadcn/ui. shadcn lives only here, never in the published packages. The app depends on `@hardikrastogi/core` and `@hardikrastogi/react` through the workspace, so it always runs the local source of both.
+- **Landing page** (`/`): what Formora is, install and usage snippets, how it works, and an honest status note (0.x, builder and hosting are planned).
+- **Docs** (`/docs/*`, 8 pages): introduction, installation, quickstart, FormDefinition reference, field types, theming, custom field types, API reference. The quickstart definition was checked against the real schema before writing it down.
+- **Playground** (`/playground`): edit a FormDefinition as JSON and the form re-renders as you type; three examples; Format, Copy and Reset; on submit it shows the exact FormSubmission a backend would receive. Broken JSON keeps the last valid preview and shows the error. Valid JSON that is not a valid form shows the schema problem. On phones the editor and preview switch with tabs.
+- A **custom `rating` field type** registered in the playground, which proves the plugin system works for an outside consumer (docs page shows the same code).
+- **Tests:** 37 Playwright tests run against a production build in real Chromium: docs pages, the whole fill-in-and-submit flow, validation, live editing, error states, plugin field, phone layout with no sideways scrolling, and axe accessibility scans of 5 pages. Run with `pnpm test:e2e` from the repo root.
+
+**Bugs found by looking at it in a real browser and fixed:**
+- Focus after a failed submit was timing dependent (worked on React 18 by luck, failed on React 19). Now runs in an effect after the errors render.
+- Picking a playground example briefly flashed the previous example. Cause was deferring the JSON parse. Removed the deferral.
+- Code blocks failed contrast and keyboard-scroll accessibility checks; a themed background had no inner padding (fixed in the react package: setting a background now adds padding).
+- shadcn generated a circular font variable, and Next's `LayoutProps` type only exists after a build; replaced with explicit types.
+
+**Decisions:**
+- React is on 19 everywhere in the workspace (the react package tests moved from 18 to 19) so there is exactly one React copy.
+- Plain textarea for the JSON editor rather than Monaco or CodeMirror: much lighter, good enough for now.
+- Docs are plain TSX pages, not MDX: fewer moving parts.
+- Light theme only for the site for now.
+
+**Not done yet (needs you):** publishing core `0.2.0` and react `0.1.0` to npm, and deploying to Vercel. Until the packages are published, the install command on the site will not work for outside visitors.

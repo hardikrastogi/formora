@@ -69,11 +69,13 @@ Turns a `FormDefinition` into an actual rendered, fillable form.
 
 First real, linkable, public artifact.
 
-- [ ] `apps/web` Next.js App Router setup (Tailwind + shadcn/ui here only)
-- [ ] Docs pages: install instructions, quickstart, per-package API docs
-- [ ] Playground page: live editable `FormDefinition` JSON → live rendered form
-- [ ] Deploy to Vercel
-- [ ] Add badges/links to root `README.md`
+- [x] `apps/web` Next.js App Router setup (Tailwind + shadcn/ui here only)
+- [x] Docs pages: introduction, installation, quickstart, FormDefinition reference, field types, theming, custom field types, API reference
+- [x] Playground page: live editable `FormDefinition` JSON → live rendered form, 3 examples, submission output
+- [x] Real-browser end-to-end tests (Playwright) plus automated accessibility scans (axe) — 37 tests
+- [ ] Publish `@hardikrastogi/core@0.2.0` and `@hardikrastogi/react@0.1.0` to npm (needs your 2FA; the docs assume they are published)
+- [ ] Deploy to Vercel (needs your Vercel account)
+- [ ] Add badges/links to root `README.md` (needs the live URL)
 
 **Milestone:** a public URL exists that you can put on a CV/portfolio today.
 

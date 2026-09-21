@@ -105,3 +105,27 @@ Respondent opens /f/[slug]
 ---
 
 <!-- Update each section above as its phase is actually implemented. Add new sections (e.g. KYC verification flow) as those phases land. -->
+
+---
+
+## `apps/web` (implemented in Phase 3)
+
+```
+Visitor's browser
+   │
+   ▼  Next.js App Router (all pages are static, prerendered at build time)
+   │     /            landing
+   │     /docs/*      8 documentation pages (server components)
+   │     /playground  one client component
+   │
+   ▼  /playground data flow (everything happens in the browser, nothing is sent anywhere)
+        JSON text (textarea)
+           → JSON.parse  ── invalid? show the error, keep the last valid definition
+           → <FormRenderer definition registry>   (registry = 8 built-ins + custom "rating")
+                 → FormDefinitionSchema.safeParse → invalid? the renderer explains why
+                 → fields drawn on the 12-column grid
+           → user submits → answers → wrapped as a FormSubmission { formId, schemaVersion, answers, meta }
+           → shown on screen as JSON (this is what a real backend would receive)
+```
+
+There is still no backend, database or account system. The hosted-form flow (publish, respondent access modes, submissions API, MongoDB) arrives in Phase 5.

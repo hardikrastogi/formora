@@ -15,7 +15,11 @@ export function themeToCssVars(theme: Theme | undefined): CSSProperties {
   const vars: CssVars = {};
   if (!theme) return vars;
   if (theme.colors?.primary) vars["--df-primary"] = theme.colors.primary;
-  if (theme.colors?.background) vars["--df-bg"] = theme.colors.background;
+  if (theme.colors?.background) {
+    vars["--df-bg"] = theme.colors.background;
+    // A visible background needs breathing room, or text touches the edge of the coloured area.
+    vars["--df-form-padding"] = "1.25rem";
+  }
   if (theme.colors?.text) vars["--df-text"] = theme.colors.text;
   if (theme.radius) vars["--df-radius"] = RADIUS[theme.radius];
   if (theme.density) vars["--df-gap"] = GAP[theme.density];
