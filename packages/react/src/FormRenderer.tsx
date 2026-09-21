@@ -1,4 +1,4 @@
-import { useId, useRef, type CSSProperties } from "react";
+import { useEffect, useId, useRef, type CSSProperties } from "react";
 import * as Label from "@radix-ui/react-label";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import type { FieldPluginRegistry, FormDefinitionInput } from "@hardikrastogi/core";
@@ -122,6 +122,13 @@ export function FormRenderer({
   const baseId = useId();
   const formRef = useRef<HTMLFormElement>(null);
   const r = useFormRenderer(definition, { registry, defaultValues, onSubmit });
+  const submitCount = r.form.formState.submitCount;
+
+  // Runs after the render that shows the errors, so aria-invalid is already in the DOM.
+  useEffect(() => {
+    if (submitCount === 0) return;
+    formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+  }, [submitCount]);
 
   if (!r.definition) {
     return (
@@ -145,10 +152,7 @@ export function FormRenderer({
       style={style}
       noValidate
       aria-busy={r.isSubmitting || undefined}
-      onSubmit={async (event) => {
-        await r.submit(event);
-        formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
-      }}
+      onSubmit={r.submit}
     >
       {r.rows.map((row) => (
         <div key={row.id} className={cx("df-row", classNames.row)}>

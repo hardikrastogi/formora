@@ -11,7 +11,8 @@
     "typecheck": "turbo run typecheck",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "turbo run build && changeset publish"
+    "release": "turbo run build && changeset publish",
+    "test:e2e": "turbo run test:e2e"
   },
   "devDependencies": {
     "turbo": "^2.1.0",

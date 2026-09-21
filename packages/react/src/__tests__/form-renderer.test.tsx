@@ -193,9 +193,17 @@ describe("FormRenderer", () => {
     expect(form.style.getPropertyValue("--df-radius")).toBe("12px");
     expect(form.style.getPropertyValue("--df-gap")).toBe("1.5rem");
     expect(form.style.getPropertyValue("--df-font")).toContain("Inter");
+    expect(form.style.getPropertyValue("--df-form-padding")).toBe("");
     const field = container.querySelector(".df-field") as HTMLElement;
     expect(field.style.getPropertyValue("--df-field-text")).toBe("#00ff00");
     expect(field.style.getPropertyValue("--df-field-radius")).toBe("9999px");
+  });
+
+  it("adds inner padding only when the theme sets a background colour", () => {
+    const { container } = render(
+      <FormRenderer definition={definition({ theme: { colors: { background: "#0f172a" } } })} />,
+    );
+    expect(container.querySelector("form")!.style.getPropertyValue("--df-form-padding")).toBe("1.25rem");
   });
 
   it("lets consumers add class names per slot", () => {
