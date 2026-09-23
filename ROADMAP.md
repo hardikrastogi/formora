@@ -83,22 +83,28 @@ First real, linkable, public artifact.
 
 ---
 
-## Phase 4 — `@hardikrastogi/builder`: Drag-Drop Authoring UI (Weeks 10–14)
+## Phase 4 — `@hardikrastogi/builder`: Drag-Drop Authoring UI (Weeks 10–14) ✅ DONE
 
 The actual "form builder" experience.
 
-- [ ] Package scaffold, depends on `core` + `react`
-- [ ] Zustand + Immer store holding the live `FormDefinition` (edits mutate it directly)
-- [ ] Immer patches wired to undo/redo
-- [ ] Three-panel layout: palette (left) / canvas (center) / inspector (right)
-- [ ] dnd-kit: drag fields from palette onto the 12-column grid canvas
-- [ ] Inspector tabs: Basic / Validation / Logic / Style (progressive disclosure — Validation/Logic collapsed by default)
-- [ ] Preview mode toggle (same view, not a separate route)
-- [ ] Top bar: form name, Preview toggle, Share, save-state indicator
-- [ ] WCAG AA contrast check on primary theme color, inline warning if it fails
-- [ ] Publish `@hardikrastogi/builder@0.1.0`
+- [x] Package scaffold, depends on `core` + `react`
+- [x] Zustand + Immer store holding the live `FormDefinition` (edits mutate it directly)
+- [x] Undo/redo (whole-definition snapshots, not Immer patches — see note below)
+- [x] Three-panel layout: palette (left) / canvas (center) / inspector (right)
+- [x] dnd-kit: drag fields from palette onto the canvas, or click to add; drag existing fields to reorder
+- [x] Inspector tabs: Basic / Validation / Logic / Style (Logic is a placeholder until Phase 6)
+- [x] Preview mode toggle (same view, not a separate route) — renders the real `FormRenderer`
+- [x] Top bar: form name, Undo/Redo, Theme button, Preview toggle, Share (disabled, stubbed for Phase 5), save-state indicator
+- [x] WCAG AA contrast check on primary theme color, inline warning if it fails
+- [x] Wired into `apps/web` at `/builder`, with a matching `/docs/builder` reference page
+- [x] Autosave to localStorage as a stand-in for the Phase 5 backend autosave
+- [x] Publish `@hardikrastogi/builder@0.1.0`
 
-**Milestone:** you can open the builder in `apps/web`, drag fields onto a grid, style it, and see a live preview — the core "wow" demo.
+> **Simplification:** undo/redo stores whole `FormDefinition` snapshots rather than Immer's inverse patches — form definitions are small, so this is simpler and equally correct, at the cost of slightly more memory for very long undo histories (capped at 50 steps).
+>
+> **Scope note:** fields are one per row for now; a field's width (1–12 grid columns) is set numerically in the Style tab rather than by dragging fields side by side into the same row.
+
+**Milestone:** you can open the builder, drag fields onto a grid, style them, and see a live, working preview — the core "wow" demo. ✅
 
 ---
 

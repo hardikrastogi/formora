@@ -9,6 +9,7 @@ const DOCS = [
   ["/docs/field-types", "Field types"],
   ["/docs/theming", "Theming"],
   ["/docs/custom-fields", "Custom field types"],
+  ["/docs/builder", "Builder"],
   ["/docs/api", "API reference"],
 ] as const;
 
@@ -40,7 +41,7 @@ test("docs sidebar navigates between pages", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1, name: "Theming" })).toBeVisible();
 });
 
-for (const path of ["/", "/docs", "/docs/quickstart", "/docs/form-definition", "/playground"]) {
+for (const path of ["/", "/docs", "/docs/quickstart", "/docs/form-definition", "/playground", "/builder"]) {
   test("no automatically detectable accessibility violations on " + path, async ({ page }) => {
     await page.goto(path);
     const results = await new AxeBuilder({ page }).analyze();

@@ -75,3 +75,25 @@ Each entry: what was done, what it enables, anything worth remembering about how
 - Light theme only for the site for now.
 
 **Not done yet (needs you):** publishing core `0.2.0` and react `0.1.0` to npm, and deploying to Vercel. Until the packages are published, the install command on the site will not work for outside visitors.
+
+---
+
+## Phase 4 — `@hardikrastogi/builder` drag-and-drop authoring UI
+
+**What was built:**
+- A Zustand store (`src/store.ts`) holding the live `FormDefinition` while building. Every action (`addField`, `removeField`, `updateField`, `reorderFields`, `setFieldSpan`, `setTheme`, `setFormName`) goes through Immer, so it's written as if mutating directly. Undo/redo works by snapshotting the whole definition before each change (capped at 50 steps) — simpler than Immer's inverse-patch approach and just as correct at this size.
+- **Three-panel UI**: `Palette` (left, field types grouped by category with search, click-to-add or drag-to-add), `Canvas` (center, drag to reorder via dnd-kit, click a field to select it, delete button per field), `Inspector` (right, four tabs — Basic / Validation / Logic / Style — for whatever's selected, or the form-wide theme when nothing is).
+- **`TopBar`**: form name, Undo/Redo, a Theme button (deselects the current field so the theme tab is reachable — added after testing showed no other way back to it), a Preview/Edit toggle, a disabled Share button (arrives with Phase 5), and a save-state indicator.
+- **Preview mode** swaps the three panels for the real `@hardikrastogi/react` `FormRenderer`, rendering the actual current definition — not a mockup.
+- **WCAG AA contrast check** (`src/contrast.ts`): computes the real relative-luminance contrast ratio between the chosen primary colour and white button text, and shows an inline warning with the actual ratio when it's below 4.5:1.
+- **Autosave** (`src/use-autosave.ts`) debounces writes to `localStorage`, explicitly documented as a stand-in for the Phase 5 backend autosave, not the real thing.
+- Wired into `apps/web` at `/builder` (client-only, since it reads `localStorage`) plus a `/docs/builder` reference page.
+
+**Bugs found by actually clicking through it (not just unit tests) and fixed:**
+- **Crash on Undo/Redo**: undoing past a field's creation left `selectedFieldId` pointing at a field that no longer existed, and the Inspector's `field!` non-null assertion crashed the whole app on render. Fixed in the store (undo/redo clear the selection when it no longer resolves) and hardened the Inspector to never assume the selected field still exists.
+- **No way back to the theme tab**: once a field was selected, there was no way to deselect it and see form-wide theme settings again except deleting the field. Added a `Theme` button in the top bar and made clicking empty canvas space deselect too.
+- **Accessibility, found by an automated scan of the real page**: a `<main>` nested inside the page's own `<main>` landmark, two unlabeled `<aside>` landmarks with the same implicit role, and the palette's category headings jumping from `<h1>` straight to `<h3>`. All three fixed (the panel divs are no longer landmarks, the asides got `aria-label`s, and the category headings are now `<h2>`).
+
+**Tests:** 29 Vitest/Testing Library tests (11 for the store's logic including undo/redo edge cases, 4 for the contrast calculation, 14 for the full `Builder` component) plus 9 new Playwright end-to-end tests (adding fields, editing, required/validation, delete, undo/redo, preview, the contrast warning, and autosave surviving a page reload) — all passing, including an accessibility scan of the live `/builder` page.
+
+**Not built yet:** dragging a field into an existing row to sit side-by-side with another (width is set numerically instead); the Logic tab is a placeholder until Phase 6; sharing and multi-device sync wait for Phase 5's real backend.

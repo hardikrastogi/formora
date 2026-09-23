@@ -6,5 +6,6 @@ export const DOCS_NAV = [
   { href: "/docs/field-types", label: "Field types" },
   { href: "/docs/theming", label: "Theming" },
   { href: "/docs/custom-fields", label: "Custom field types" },
+  { href: "/docs/builder", label: "Builder" },
   { href: "/docs/api", label: "API reference" },
 ] as const;
