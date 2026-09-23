@@ -1,6 +1,12 @@
 # Formora
 
+[![npm core](https://img.shields.io/npm/v/%40hardikrastogi%2Fcore?label=%40hardikrastogi%2Fcore)](https://www.npmjs.com/package/@hardikrastogi/core)
+[![npm react](https://img.shields.io/npm/v/%40hardikrastogi%2Freact?label=%40hardikrastogi%2Freact)](https://www.npmjs.com/package/@hardikrastogi/react)
+[![Live site](https://img.shields.io/badge/live-formora--web.vercel.app-black)](https://formora-web.vercel.app)
+
 A schema-driven, dynamic form builder shipped as a set of versioned npm packages, with a Next.js showcase app on top.
+
+**Live:** [formora-web.vercel.app](https://formora-web.vercel.app) · [Docs](https://formora-web.vercel.app/docs) · [Playground](https://formora-web.vercel.app/playground)
 
 Describe a form as one JSON document and render a working, validated, themeable form from it in any React app. Planned next: a drag-and-drop builder, hosted shareable forms, and a pluggable document-verification field pack.
 

@@ -73,9 +73,11 @@ First real, linkable, public artifact.
 - [x] Docs pages: introduction, installation, quickstart, FormDefinition reference, field types, theming, custom field types, API reference
 - [x] Playground page: live editable `FormDefinition` JSON → live rendered form, 3 examples, submission output
 - [x] Real-browser end-to-end tests (Playwright) plus automated accessibility scans (axe) — 37 tests
-- [ ] Publish `@hardikrastogi/core@0.2.0` and `@hardikrastogi/react@0.1.0` to npm (needs your 2FA; the docs assume they are published)
-- [ ] Deploy to Vercel (needs your Vercel account)
-- [ ] Add badges/links to root `README.md` (needs the live URL)
+- [x] Publish `@hardikrastogi/core@0.2.0` and `@hardikrastogi/react@0.1.0` to npm
+- [x] Deploy to Vercel — live at [formora-web.vercel.app](https://formora-web.vercel.app)
+- [x] Add badges/links to root `README.md`
+
+**Phase 3 complete.**
 
 **Milestone:** a public URL exists that you can put on a CV/portfolio today.
 
