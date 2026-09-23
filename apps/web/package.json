@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
+    "@hardikrastogi/builder": "workspace:*",
     "@hardikrastogi/core": "workspace:*",
     "@hardikrastogi/react": "workspace:*",
     "class-variance-authority": "^0.7.1",

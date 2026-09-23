@@ -3,6 +3,7 @@ import Link from "next/link";
 const links = [
   { href: "/docs", label: "Docs" },
   { href: "/playground", label: "Playground" },
+  { href: "/builder", label: "Builder" },
   { href: "https://www.npmjs.com/package/@hardikrastogi/react", label: "npm", external: true },
 ];
 

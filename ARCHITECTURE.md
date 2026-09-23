@@ -69,18 +69,22 @@ apps/web                    (Next.js: docs, playground, hosted forms, auth)
 
 ---
 
-## Form-Building Flow (Builder)
-
-*(To be filled in once Phase 4's builder UI exists. Placeholder shape:)*
+## Form-Building Flow (Builder) — implemented in Phase 4, backend part still Phase 5
 
 ```
-User drags field (dnd-kit)
-   → Zustand store updates FormDefinition (Immer patch recorded for undo/redo)
-   → Canvas re-renders via @hardikrastogi/react using the updated FormDefinition
-   → Autosave debounces and PATCHes the definition to the backend
-   → Backend validates against @hardikrastogi/core's Zod schema
-   → Persisted via Mongoose to MongoDB
+User clicks or drags a field from the Palette (dnd-kit)
+   → builder store's addField() → Immer-produced update to the in-memory FormDefinition
+   → a snapshot of the PREVIOUS definition is pushed onto the undo stack
+   → Canvas re-renders (registry lookup per field, same plugins @hardikrastogi/react uses)
+   → useAutosave debounces ~500ms, then writes the definition to localStorage (Phase 4 stand-in)
+   → [Phase 5, not yet built] debounced PATCH to a real backend instead of localStorage
+   → [Phase 5, not yet built] server validates against @hardikrastogi/core's Zod schema, persists via Mongoose
+
+Preview toggle → the SAME FormDefinition is handed straight to <FormRenderer>, unmodified —
+                 there is no separate "preview data", so what you see is what respondents would get.
 ```
+
+The store lives entirely in the browser tab; nothing here talks to a network yet.
 
 ---
 
@@ -115,8 +119,9 @@ Visitor's browser
    │
    ▼  Next.js App Router (all pages are static, prerendered at build time)
    │     /            landing
-   │     /docs/*      8 documentation pages (server components)
+   │     /docs/*      9 documentation pages (server components)
    │     /playground  one client component
+   │     /builder     one client component wrapping @hardikrastogi/builder's <Builder>
    │
    ▼  /playground data flow (everything happens in the browser, nothing is sent anywhere)
         JSON text (textarea)
