@@ -7,47 +7,44 @@ export const metadata: Metadata = { title: "Custom field types" };
 const PLUGIN = `import { z } from "zod";
 import type { FieldRendererProps, ReactFieldPlugin } from "@hardikrastogi/react";
 
-function RatingInput({ props, value, onChange, onBlur, inputId, labelId, invalid, disabled }: FieldRendererProps) {
-  const max = typeof props.max === "number" ? props.max : 5;
-  const current = typeof value === "number" ? value : 0;
+function SliderInput({ props, value, onChange, onBlur, inputId, describedBy, invalid }: FieldRendererProps) {
+  const min = typeof props.min === "number" ? props.min : 0;
+  const max = typeof props.max === "number" ? props.max : 10;
+  const current = typeof value === "number" ? value : min;
 
   return (
-    <div id={inputId} role="radiogroup" aria-labelledby={labelId} aria-invalid={invalid || undefined} tabIndex={-1}>
-      {Array.from({ length: max }, (_, i) => i + 1).map((n) => (
-        <button
-          key={n}
-          type="button"
-          role="radio"
-          aria-checked={current === n}
-          aria-label={"Rate " + n}
-          disabled={disabled}
-          onClick={() => onChange(n)}
-          onBlur={onBlur}
-        >
-          {n <= current ? "★" : "☆"}
-        </button>
-      ))}
-    </div>
+    <input
+      id={inputId}
+      type="range"
+      min={min}
+      max={max}
+      value={current}
+      aria-invalid={invalid || undefined}
+      aria-describedby={describedBy}
+      onChange={(e) => onChange(Number(e.target.value))}
+      onBlur={onBlur}
+    />
   );
 }
 
-export const ratingPlugin: ReactFieldPlugin = {
-  type: "rating",
-  schema: z.number().int().min(1),
-  defaultProps: { max: 5 },
-  labelKind: "group",
-  Renderer: RatingInput,
+export const sliderPlugin: ReactFieldPlugin = {
+  type: "slider",
+  schema: z.number(),
+  defaultProps: { min: 0, max: 10 },
+  emptyValue: 0,
+  labelKind: "control",
+  Renderer: SliderInput,
 };`;
 
 const REGISTER = `import { FormRenderer, createDefaultRegistry } from "@hardikrastogi/react";
 
 // Create once, outside your component
 const registry = createDefaultRegistry();
-registry.register(ratingPlugin);
+registry.register(sliderPlugin);
 
 <FormRenderer definition={definition} registry={registry} />`;
 
-const USE = `{ "id": "rating", "type": "rating", "label": "How was it?", "required": true, "defaultProps": { "max": 5 } }`;
+const USE = `{ "id": "satisfaction", "type": "slider", "label": "How likely are you to recommend us?", "defaultProps": { "min": 0, "max": 10 } }`;
 
 export default function CustomFieldsPage() {
   return (
@@ -59,7 +56,7 @@ export default function CustomFieldsPage() {
       </p>
 
       <h2>1. Write the plugin</h2>
-      <CodeBlock title="rating.tsx" code={PLUGIN} />
+      <CodeBlock title="slider.tsx" code={PLUGIN} />
 
       <h2>2. Register it</h2>
       <CodeBlock title="register" code={REGISTER} />
@@ -67,8 +64,10 @@ export default function CustomFieldsPage() {
       <h2>3. Use it in JSON</h2>
       <CodeBlock title="field" code={USE} />
       <p>
-        The <Link href="/playground">playground</Link> registers exactly this rating field. Pick the &quot;Custom
-        field&quot; example to see it.
+        The <Link href="/playground">playground</Link> registers exactly this slider field. Pick the &quot;Custom
+        field&quot; example to see it. (<code>rating</code>, <code>country</code>, <code>currency</code>,{" "}
+        <code>url</code> and <code>time</code> all started this way and are now built in — see{" "}
+        <Link href="/docs/field-types">field types</Link>.)
       </p>
 
       <h2>The plugin object</h2>

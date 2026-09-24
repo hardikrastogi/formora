@@ -7,11 +7,11 @@ import { CopyButton } from "@/components/copy-button";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EXAMPLES } from "@/lib/examples";
-import { ratingPlugin } from "@/lib/rating-field";
+import { sliderPlugin } from "@/lib/slider-field";
 import { cn } from "@/lib/utils";
 
 const registry = createDefaultRegistry();
-registry.register(ratingPlugin);
+registry.register(sliderPlugin);
 
 const pretty = (value: unknown) => JSON.stringify(value, null, 2);
 

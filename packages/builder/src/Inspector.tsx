@@ -24,7 +24,8 @@ function BasicTab() {
   const selectedFieldId = useBuilder((s) => s.selectedFieldId)!;
   const updateField = useBuilder((s) => s.updateField);
   const field = definition.fields.find((f) => f.id === selectedFieldId)!;
-  const hasOptions = field.type === "select" || field.type === "radio";
+  const hasOptions = ["select", "radio", "country", "currency"].includes(field.type);
+  const hasPlaceholder = !["checkbox", "rating"].includes(field.type);
 
   return (
     <div className="fb-inspector-tab">
@@ -47,7 +48,7 @@ function BasicTab() {
         />
         <span>Required</span>
       </label>
-      {field.type !== "checkbox" && (
+      {hasPlaceholder && (
         <label className="fb-field">
           <span>Placeholder</span>
           <input

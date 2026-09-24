@@ -50,6 +50,24 @@ describe("Builder", () => {
     expect(row).toHaveTextContent("*");
   });
 
+  it("the palette lists all five newly added field types under the right categories", () => {
+    renderBuilder();
+    for (const name of ["Website", "Country", "Currency", "Time", "Rating"]) {
+      expect(screen.getByRole("button", { name: `Add ${name} field` })).toBeInTheDocument();
+    }
+  });
+
+  it("a rating field has no Placeholder input, but a country field has an Options editor", async () => {
+    const user = userEvent.setup();
+    renderBuilder();
+    await user.click(screen.getByRole("button", { name: "Add Rating field" }));
+    expect(screen.queryByLabelText("Placeholder")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Add Country field" }));
+    expect(screen.getByLabelText("Placeholder")).toBeInTheDocument();
+    expect(screen.getByLabelText("Options (one per line)")).toBeInTheDocument();
+  });
+
   it("the Validation tab shows length fields for text and range fields for number", async () => {
     const user = userEvent.setup();
     renderBuilder();
