@@ -8,16 +8,21 @@ const ROWS = [
   ["number", "number", "placeholder"],
   ["select", "string", "placeholder, options"],
   ["date", "string (YYYY-MM-DD)", "none"],
+  ["time", "string (HH:MM)", "none"],
   ["checkbox", "boolean", "none. When required, it must be ticked."],
   ["radio", "string", "options"],
   ["textarea", "string", "placeholder, rows (default 4)"],
+  ["url", "string", "placeholder. Also checks it is a valid http(s) URL."],
+  ["rating", "number", "max (default 5) — the number of stars"],
+  ["country", "string (ISO 3166-1 alpha-2)", "placeholder, options (a real country list ships by default)"],
+  ["currency", "string (ISO 4217 code)", "placeholder, options (a curated currency list ships by default)"],
 ] as const;
 
 export default function FieldTypesPage() {
   return (
     <>
       <h1>Field types</h1>
-      <p className="lead">Eight built in. Anything else is a plugin you register yourself.</p>
+      <p className="lead">13 built in. Anything else is a plugin you register yourself.</p>
 
       <table>
         <thead>
@@ -42,8 +47,10 @@ export default function FieldTypesPage() {
 
       <h2>Options</h2>
       <p>
-        <code>select</code> and <code>radio</code> read <code>defaultProps.options</code>. Use plain strings, or
-        objects when the stored value should differ from the label:
+        <code>select</code>, <code>radio</code>, <code>country</code> and <code>currency</code> all read{" "}
+        <code>defaultProps.options</code>. <code>country</code> and <code>currency</code> ship with a sensible default
+        list already, but setting your own <code>options</code> on the field replaces it entirely. Use plain strings,
+        or objects when the stored value should differ from the label:
       </p>
       <p>
         <code>{'["Free", "Pro"]'}</code>

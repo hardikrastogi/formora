@@ -111,7 +111,7 @@ const custom: FormDefinitionInput = {
   updatedAt: STAMP,
   fields: [
     { id: "name", type: "text", label: "Your name" },
-    { id: "rating", type: "rating", label: "How was it?", required: true, defaultProps: { max: 5 } },
+    { id: "satisfaction", type: "slider", label: "How likely are you to recommend us?", defaultProps: { min: 0, max: 10 } },
     {
       id: "comment",
       type: "textarea",
@@ -122,7 +122,7 @@ const custom: FormDefinitionInput = {
   layout: {
     rows: [
       { id: "r1", columns: [{ span: 12, fieldId: "name" }] },
-      { id: "r2", columns: [{ span: 12, fieldId: "rating" }] },
+      { id: "r2", columns: [{ span: 12, fieldId: "satisfaction" }] },
       { id: "r3", columns: [{ span: 12, fieldId: "comment" }] },
     ],
   },
@@ -135,8 +135,47 @@ const custom: FormDefinitionInput = {
   logic: { visibility: [], calculated: [] },
 };
 
+const international: FormDefinitionInput = {
+  id: "international",
+  name: "International order form",
+  schemaVersion: 1,
+  createdAt: STAMP,
+  updatedAt: STAMP,
+  fields: [
+    { id: "full_name", type: "text", label: "Full name", required: true },
+    { id: "country", type: "country", label: "Country", required: true },
+    { id: "currency", type: "currency", label: "Preferred currency" },
+    { id: "website", type: "url", label: "Company website" },
+    { id: "call_time", type: "time", label: "Best time to call" },
+    { id: "experience", type: "rating", label: "Rate your last experience with us", defaultProps: { max: 5 } },
+  ],
+  layout: {
+    rows: [
+      { id: "r1", columns: [{ span: 12, fieldId: "full_name" }] },
+      {
+        id: "r2",
+        columns: [
+          { span: 6, fieldId: "country" },
+          { span: 6, fieldId: "currency" },
+        ],
+      },
+      {
+        id: "r3",
+        columns: [
+          { span: 8, fieldId: "website" },
+          { span: 4, fieldId: "call_time" },
+        ],
+      },
+      { id: "r4", columns: [{ span: 12, fieldId: "experience" }] },
+    ],
+  },
+  theme: {},
+  logic: { visibility: [], calculated: [] },
+};
+
 export const EXAMPLES: Example[] = [
   { id: "contact", name: "Contact form", definition: contact },
   { id: "event", name: "Event registration", definition: event },
+  { id: "international", name: "International order (new field types)", definition: international },
   { id: "custom", name: "Custom field + dark theme", definition: custom },
 ];

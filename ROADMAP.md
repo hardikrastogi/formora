@@ -63,6 +63,8 @@ Turns a `FormDefinition` into an actual rendered, fillable form.
 
 **Milestone:** a plain React app (not Next.js) can `npm install` both packages, pass in a hand-written `FormDefinition`, and render a real, fillable, validated form.
 
+> **Later addition (after Phase 4):** 5 more built-in field types — `url`, `time`, `rating`, `country`, `currency` — bringing the total to 13. See the dated `BUILD_LOG.md` entry.
+
 ---
 
 ## Phase 3 — Next.js Docs + Playground (Weeks 8–9)

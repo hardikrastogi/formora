@@ -96,15 +96,15 @@ test("event registration: theme applied, default radio, number range enforced", 
   expect(body.answers).toMatchObject({ full_name: "Ada", attendees: 4, ticket: "VIP", terms: true });
 });
 
-test("custom rating field plugin works end to end", async ({ page }) => {
+test("custom slider field plugin works end to end", async ({ page }) => {
   await page.getByRole("button", { name: "Custom field + dark theme" }).click();
-  await page.getByRole("button", { name: "Submit" }).click();
-  await expect(page.getByText('"How was it?" is required')).toBeVisible();
+  const slider = page.getByLabel(/How likely are you to recommend us/);
+  await slider.focus();
+  for (let i = 0; i < 7; i++) await page.keyboard.press("ArrowRight");
 
-  await page.getByRole("radio", { name: "4 stars" }).click();
   await page.getByRole("button", { name: "Submit" }).click();
   const body = JSON.parse((await output(page).textContent()) ?? "{}");
-  expect(body.answers.rating).toBe(4);
+  expect(body.answers.satisfaction).toBe(7);
 });
 
 test("switching examples lands on the new form and never flashes the previous one", async ({ page }) => {
@@ -112,11 +112,42 @@ test("switching examples lands on the new form and never flashes the previous on
   await expect(page.getByLabel("Full name")).toBeVisible();
 
   await page.getByRole("button", { name: "Custom field + dark theme" }).click();
-  await expect(page.getByRole("radiogroup", { name: "How was it?" })).toBeVisible();
+  await expect(page.getByLabel(/How likely are you to recommend us/)).toBeVisible();
   await page.waitForTimeout(400);
   await expect(page.getByLabel("Full name")).toHaveCount(0);
-  await expect(page.getByRole("radiogroup", { name: "How was it?" })).toBeVisible();
+  await expect(page.getByLabel(/How likely are you to recommend us/)).toBeVisible();
   expect(await editor(page).inputValue()).toContain('"id": "feedback"');
+});
+
+test("built-in country, currency, url, time and rating field types work end to end", async ({ page }) => {
+  await page.getByRole("button", { name: "International order (new field types)" }).click();
+
+  await page.getByLabel("Full name").fill("Ada Lovelace");
+  await page.getByLabel("Country").selectOption("IN");
+  await page.getByLabel("Preferred currency").selectOption("INR");
+  await page.getByLabel("Company website").fill("https://formora.dev");
+  await page.getByLabel("Best time to call").fill("14:30");
+  await page.getByRole("radio", { name: "4 stars" }).click();
+
+  await page.getByRole("button", { name: "Submit" }).click();
+  const body = JSON.parse((await output(page).textContent()) ?? "{}");
+  expect(body.answers).toMatchObject({
+    full_name: "Ada Lovelace",
+    country: "IN",
+    currency: "INR",
+    website: "https://formora.dev",
+    call_time: "14:30",
+    experience: 4,
+  });
+});
+
+test("a malformed URL on the international form is rejected", async ({ page }) => {
+  await page.getByRole("button", { name: "International order (new field types)" }).click();
+  await page.getByLabel("Full name").fill("Ada");
+  await page.getByLabel("Country").selectOption("IN");
+  await page.getByLabel("Company website").fill("not-a-url");
+  await page.getByRole("button", { name: "Submit" }).click();
+  await expect(page.getByText(/Enter a valid URL/)).toBeVisible();
 });
 
 test("Reset restores the example and clears a previous submission", async ({ page }) => {

@@ -14,6 +14,12 @@ export const FIELD_CATALOG: FieldTypeMeta[] = [
     create: () => ({ label: "Email", defaultProps: { placeholder: "" } }),
   },
   {
+    type: "url",
+    label: "Website",
+    category: "Basic",
+    create: () => ({ label: "Website", defaultProps: { placeholder: "https://" } }),
+  },
+  {
     type: "number",
     label: "Number",
     category: "Basic",
@@ -44,10 +50,34 @@ export const FIELD_CATALOG: FieldTypeMeta[] = [
     create: () => ({ label: "Checkbox" }),
   },
   {
+    type: "country",
+    label: "Country",
+    category: "Choice",
+    create: () => ({ label: "Country" }),
+  },
+  {
+    type: "currency",
+    label: "Currency",
+    category: "Choice",
+    create: () => ({ label: "Currency" }),
+  },
+  {
     type: "date",
     label: "Date",
     category: "Date & Time",
     create: () => ({ label: "Date" }),
+  },
+  {
+    type: "time",
+    label: "Time",
+    category: "Date & Time",
+    create: () => ({ label: "Time" }),
+  },
+  {
+    type: "rating",
+    label: "Rating",
+    category: "Feedback",
+    create: () => ({ label: "Rating", defaultProps: { max: 5 } }),
   },
 ];
 

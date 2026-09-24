@@ -59,7 +59,7 @@ Each entry: what was done, what it enables, anything worth remembering about how
 - **Landing page** (`/`): what Formora is, install and usage snippets, how it works, and an honest status note (0.x, builder and hosting are planned).
 - **Docs** (`/docs/*`, 8 pages): introduction, installation, quickstart, FormDefinition reference, field types, theming, custom field types, API reference. The quickstart definition was checked against the real schema before writing it down.
 - **Playground** (`/playground`): edit a FormDefinition as JSON and the form re-renders as you type; three examples; Format, Copy and Reset; on submit it shows the exact FormSubmission a backend would receive. Broken JSON keeps the last valid preview and shows the error. Valid JSON that is not a valid form shows the schema problem. On phones the editor and preview switch with tabs.
-- A **custom `rating` field type** registered in the playground, which proves the plugin system works for an outside consumer (docs page shows the same code).
+- A **custom `rating` field type** registered in the playground, which proves the plugin system works for an outside consumer (docs page shows the same code). *(Superseded 2026-09-24: `rating` became a real built-in type; the custom-field demo moved to a `slider` field — see that entry below.)*
 - **Tests:** 37 Playwright tests run against a production build in real Chromium: docs pages, the whole fill-in-and-submit flow, validation, live editing, error states, plugin field, phone layout with no sideways scrolling, and axe accessibility scans of 5 pages. Run with `pnpm test:e2e` from the repo root.
 
 **Bugs found by looking at it in a real browser and fixed:**
@@ -97,3 +97,24 @@ Each entry: what was done, what it enables, anything worth remembering about how
 **Tests:** 29 Vitest/Testing Library tests (11 for the store's logic including undo/redo edge cases, 4 for the contrast calculation, 14 for the full `Builder` component) plus 9 new Playwright end-to-end tests (adding fields, editing, required/validation, delete, undo/redo, preview, the contrast warning, and autosave surviving a page reload) — all passing, including an accessibility scan of the live `/builder` page.
 
 **Not built yet:** dragging a field into an existing row to sit side-by-side with another (width is set numerically instead); the Logic tab is a placeholder until Phase 6; sharing and multi-device sync wait for Phase 5's real backend.
+
+---
+
+## 2026-09-24 — 5 more built-in field types: url, time, rating, country, currency
+
+**What was built:**
+- `@hardikrastogi/react` grows from 8 to 13 built-in field types:
+  - `url` — text input, checks it is a valid `http(s)` URL.
+  - `time` — text input of kind `time`, same pattern as the existing `date` field.
+  - `rating` — a row of clickable stars (`radiogroup` of buttons), configurable via `defaultProps.max` (default 5).
+  - `country` — a `<select>` pre-filled with a curated ~110-country list (ISO 3166-1 alpha-2 codes as the stored value); override `defaultProps.options` to replace it.
+  - `currency` — a `<select>` pre-filled with ~34 common ISO 4217 currency codes; same override mechanism.
+- All five registered in `createDefaultRegistry()`, so `defaultRegistry` now has 13 plugins.
+- Builder palette (`packages/builder/src/field-catalog.ts`) updated to match: Website under Basic, Country/Currency under Choice, Time under Date & Time, Rating in a new Feedback category. The Inspector's Basic tab now hides the (meaningless) Placeholder field for `rating`, and shows the Options editor for `country`/`currency` too.
+- `apps/web`: added an "International order" playground example exercising all five live; updated `/docs/field-types` (13 rows) and `/docs/api`.
+
+**A naming collision, and how it was resolved:**
+- `rating` was previously the playground's worked example of a *custom* field type (and the subject of the `/docs/custom-fields` tutorial). Promoting it to a real built-in would have made `registry.register(ratingPlugin)` throw (duplicate type) and made the tutorial self-contradictory (a "how to build a custom field" page demonstrating a field that ships built in).
+- Fix: the custom-field demo was swapped to a **slider** (`type: "slider"`, a `<input type="range">`), registered only in `apps/web`. The tutorial's code sample, the playground's "Custom field + dark theme" example, and its e2e tests were all updated to match. `rating` is now a genuine built-in with no local registration needed anywhere.
+
+**Tests:** 8 new Vitest tests in `@hardikrastogi/react` (one file per behavior: url validation, time input, rating stars + required check, country default list + override, currency), 2 new builder tests (palette lists all five; placeholder/options visibility per type), and 2 new + 2 updated Playwright end-to-end tests in `apps/web` (the international example submitting real values, a malformed-URL rejection, and the slider-based custom-field flow). All passing — 51 e2e tests total, up from 49.

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { cx, type FieldRendererProps, type ReactFieldPlugin } from "../types";
 import { str } from "./options";
 
-type TextInputKind = "text" | "email" | "date";
+type TextInputKind = "text" | "email" | "date" | "url" | "time";
 
 function makeInput(kind: TextInputKind) {
   return function TextLikeInput(p: FieldRendererProps) {
@@ -77,6 +77,30 @@ export const datePlugin: ReactFieldPlugin = {
   emptyValue: "",
   labelKind: "control",
   Renderer: makeInput("date"),
+};
+
+export const timePlugin: ReactFieldPlugin = {
+  type: "time",
+  schema: z.string().regex(/^\d{2}:\d{2}$/),
+  defaultProps: {},
+  emptyValue: "",
+  labelKind: "control",
+  Renderer: makeInput("time"),
+};
+
+const URL_PATTERN = /^https?:\/\/[^\s/$.?#].[^\s]*$/i;
+
+export const urlPlugin: ReactFieldPlugin = {
+  type: "url",
+  schema: z.string().url(),
+  defaultProps: { placeholder: "https://" },
+  emptyValue: "",
+  labelKind: "control",
+  Renderer: makeInput("url"),
+  validate: (value) =>
+    typeof value === "string" && URL_PATTERN.test(value)
+      ? { valid: true, errors: [] }
+      : { valid: false, errors: ["Enter a valid URL, starting with http:// or https://"] },
 };
 
 export const textareaPlugin: ReactFieldPlugin = {

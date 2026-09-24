@@ -1,6 +1,6 @@
 {
   "name": "@hardikrastogi/react",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Headless React renderer that turns a Formora FormDefinition into a working form.",
   "license": "MIT",
   "type": "module",
