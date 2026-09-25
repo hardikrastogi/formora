@@ -110,52 +110,75 @@ The actual "form builder" experience.
 
 ---
 
-## Phase 5 — Hosted Forms, Sharing & Response Management (Weeks 15–22)
+## Phase 5 — Hosted Forms, Sharing & Response Management (Weeks 15–27)
 
-This phase turns Formora into a Google Forms alternative: creators publish forms, share a link through WhatsApp/email/any app, and respondents can complete the form without first creating a Formora account.
+This phase turns Formora into a Google Forms alternative. It's the largest phase in the roadmap, so it's split into five independently-shippable sub-phases (5a–5e) instead of one block — each ends with something real you can click through, per the "no phase should depend on a later, unbuilt one" rule.
 
-### Creator accounts and publishing
+**Two structural decisions that apply across all of 5a–5e:**
+- **Draft vs. published split.** The builder autosaves a live, mutable `FormDefinition`. But a published form must render identically forever, even after the creator keeps editing. So publishing creates an immutable snapshot (a `FormVersion`) — editing after publish doesn't touch already-collected responses; it prepares the *next* version. Without this, `schemaVersion` alone doesn't protect old responses from a creator's later edits.
+- **Hosting metadata stays out of the portable schema.** `slug`, `published`, `accessMode`, `allowResponseEditing` — these live in the app's own Mongo `Form` document, never inside `FormDefinition` itself. Otherwise every template or exported JSON would carry hosting config, breaking the "packages work standalone" promise from decisions 4 and 11.
 
-- [ ] Auth.js (NextAuth v5) with standard sign-up/sign-in plus optional Google OAuth, using its MongoDB adapter
-- [ ] MongoDB Atlas connected via Mongoose — app-layer only
-- [ ] Save-state indicator wired to real autosave (debounced PATCH as the builder edits)
-- [ ] Publish/unpublish controls and a stable, unique `/f/[slug]` shareable URL
-- [ ] Share action that copies the URL and opens the device share sheet when supported
-- [ ] OG meta tags on `/f/[slug]` for useful WhatsApp, email, and social link previews
-- [ ] Preserve the published `schemaVersion` so each response remains tied to the exact form version that was submitted
+---
 
-### Public respondent experience
+### Phase 5a — Publish, share, and the simplest respondent flow (`anyone` mode)
 
-- [ ] Render the exact published form at `/f/[slug]` without requiring a Formora account
-- [ ] Let the creator choose one access mode per form:
-  - [ ] `anyone` — no identity verification required
-  - [ ] `verified_email` — respondent verifies an email magic link before continuing
-  - [ ] `verified_phone` — respondent verifies a phone OTP before continuing
-- [ ] Return verified respondents to the same form and preserve the intended form URL/state
-- [ ] Use short-lived, single-use verification tokens with expiry, resend cooldowns, attempt limits, and abuse rate limits
-- [ ] Submission API route: validate against `core`'s Zod schema, then persist through Mongoose
-- [ ] Show a success dialog after submission: “Your submission has been recorded.”
-- [ ] Store a stable respondent identity reference for verified submissions without forcing the respondent to create an account
+The smallest possible slice that's a genuinely working hosted form.
 
-### Account continuity and respondent history
+- [ ] MongoDB Atlas connected via Mongoose — app-layer only, `.env`-based connection string (per the earlier secrets decision)
+- [ ] `Form` document: `ownerAccountId`, `slug`, `published`, `currentVersion`, timestamps — separate from `FormDefinition`
+- [ ] `FormVersion` document: an immutable snapshot of a `FormDefinition` at publish time
+- [ ] Publish/unpublish controls in the builder; publishing snapshots the current definition into a new `FormVersion`
+- [ ] Public page at `/f/[slug]` rendering the published `FormVersion` via `FormRenderer` — no Formora account required
+- [ ] Submission API route: validate the answers against `core`'s Zod schema **again on the server**, then persist via Mongoose
+- [ ] `FormSubmission` records which `FormVersion` (not just which `schemaVersion` number) it answered
+- [ ] Success state after submit: "Your submission has been recorded," only shown after the server confirms it was saved
+- [ ] Idempotency key per submission attempt (unique index on `formId + key`) so retries/double-clicks can't create duplicates
+- [ ] OG meta tags on `/f/[slug]` for WhatsApp/email/social link previews
+- [ ] Unpublishing rejects new submissions but keeps the form and its existing data intact
+- [ ] A per-form `limitOneResponsePerRespondent`, close date, and max-responses cap (basic anti-spam — `anyone` mode has no identity to rate-limit otherwise)
 
-- [ ] When a person later creates an account and verifies the same email/phone, safely link their earlier verified respondent identity to the new account
-- [ ] Add a “Your responses” dashboard section showing only the form name and submission date for linked historical submissions
-- [ ] Never link historical submissions using an unverified email/phone typed into an ordinary answer field
-- [ ] Let respondents open a previous response and edit it only when the form creator has enabled response editing
-- [ ] Record `submittedAt`, `updatedAt`, and response revision/audit information when an answer is edited
+**Milestone:** build a form, publish it, share the link, have someone (anonymously) fill it out, see it land in MongoDB. This alone is a complete, demoable product loop.
 
-### Creator response dashboard
+### Phase 5b — Creator accounts
 
-- [ ] Add a response dashboard for every owned form with total response count and recent activity
-- [ ] Display responses using server-side pagination/cursor pagination rather than loading all responses at once
-- [ ] Add search, filters, sorting, and an openable response-details drawer/page with complete submitted answers
-- [ ] Add a per-form `allowResponseEditing` setting controlled by the creator
-- [ ] Enforce ownership and authorization on every response-list and response-detail API route
-- [ ] Add database indexes for form ID, respondent identity, submission date, and pagination order
-- [ ] Support large forms (hundreds of thousands of responses) through paginated queries and asynchronous CSV/Excel exports
+- [ ] Auth.js (NextAuth v5): email magic link + optional "Continue with Google," using the MongoDB adapter (no passwords — avoids storing/resetting them, per the earlier decision)
+- [ ] Requires a real domain with SPF/DKIM set up for reliable magic-link delivery
+- [ ] Forms are owned by an `Account`; only the owner can edit/publish/view responses for their forms
+- [ ] Save-state indicator wired to real autosave (debounced PATCH as the builder edits, replacing the builder's current localStorage stand-in)
 
-**Milestone:** a creator can publish and share a form; respondents can submit without creating an account using the creator-selected access mode; later accounts can discover their verified submission history; and creators can safely browse large response sets from their dashboard.
+**Milestone:** you have to sign in to build/manage forms; the builder's autosave now hits a real backend instead of localStorage.
+
+### Phase 5c — Verified-email respondents
+
+- [ ] Add `verified_email` as a second access mode (`anyone` stays the default)
+- [ ] Respondent enters an email → receives a magic link → clicks "Continue to form" → returns to the *same* form
+- [ ] Short-lived, single-use verification tokens: expiry, resend cooldown, max attempts, IP/identity rate limits
+- [ ] A stable `RespondentIdentity` reference stored per verified submission — without ever creating a Formora account for the respondent
+- [ ] Reuses the same email-delivery provider from 5b
+
+**Milestone:** a creator can require email verification before someone can fill out a sensitive form.
+
+### Phase 5d — Response dashboard, account linking, and editing
+
+- [ ] Creator dashboard per form: total response count, recent activity, server-side cursor-paginated list (never loads all responses at once)
+- [ ] Search, filters, sorting, and a response-details view with complete answers
+- [ ] Async CSV/Excel export for large response sets
+- [ ] Database indexes: `formId + submittedAt`, `formId + responseId`, `respondentIdentityId + submittedAt`
+- [ ] Authorization check on every list/detail/export endpoint — ownership only
+- [ ] Account linking: creating an account with the same verified email links prior anonymous-to-Formora-but-verified submissions; a "Your responses" section shows only form name + date
+- [ ] Per-form `allowResponseEditing` toggle; when on, a re-verified respondent can open and update their own response (never someone else's)
+- [ ] `submittedAt`, `updatedAt`, `revisionNumber` recorded on every edit
+
+**Milestone:** creators can safely browse/export large response sets, and returning respondents can find and edit their own past answers.
+
+### Phase 5e — Verified-phone respondents (last, and optional)
+
+- [ ] `verified_phone` access mode: phone + country code → SMS OTP → verify → continue
+- [ ] Phone number normalization to E.164 before storing/matching
+- [ ] **Before building:** confirm current SMS provider pricing and India DLT (sender/template registration) requirements — these change and directly affect feasibility/cost
+- [ ] Same token/rate-limit rules as 5c, adapted for SMS
+
+**Milestone:** phone verification works as a second respondent-verification option, matching the email flow's guarantees.
 
 ---
 
