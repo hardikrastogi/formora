@@ -1,11 +1,7 @@
-import type { Metadata } from "next";
-import { BuilderPage } from "./builder-page";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Builder",
-  description: "Drag-and-drop authoring UI for building a Formora FormDefinition.",
-};
-
+// The builder edits one specific form, so the bare /builder address just
+// sends people to their list of forms (which asks them to sign in first).
 export default function Page() {
-  return <BuilderPage />;
+  redirect("/dashboard");
 }

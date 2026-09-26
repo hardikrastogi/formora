@@ -41,7 +41,7 @@ test("docs sidebar navigates between pages", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1, name: "Theming" })).toBeVisible();
 });
 
-for (const path of ["/", "/docs", "/docs/quickstart", "/docs/form-definition", "/playground", "/builder"]) {
+for (const path of ["/", "/docs", "/docs/quickstart", "/docs/form-definition", "/playground", "/signin"]) {
   test("no automatically detectable accessibility violations on " + path, async ({ page }) => {
     await page.goto(path);
     const results = await new AxeBuilder({ page }).analyze();

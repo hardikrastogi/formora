@@ -155,3 +155,31 @@ Each entry: what was done, what it enables, anything worth remembering about how
 - **Docs pages updated**: quickstart now uses `collectServerErrors` from `@hardikrastogi/react/server` (with the reason it is a separate entry), builder docs have a "Publishing and sharing" section, API reference lists the `/server` and builder exports.
 - **Tests**: 7 new builder tests (42 total) and 1 new e2e test (unpublish, reload, republish). 61 e2e total.
 - **Version**: `@hardikrastogi/builder` bumped to 0.3.0 (to be published by the owner).
+
+
+---
+
+## Phase 5b — Creator accounts
+
+**What was built:**
+- **Sign-in with an emailed magic link** (Auth.js v5 + MongoDB adapter, database sessions, no passwords). Pages: `/signin`, `/signin/check-email`, `/signout`. New addresses get an account automatically. Links are single-use and expire in 15 minutes.
+- **Pluggable email delivery** (`lib/auth/send-magic-link.ts`, chosen by `EMAIL_TRANSPORT`): `console` prints the link in the terminal and stores it in a `dev_email_outbox` collection (local and e2e only), `resend` sends real email via Resend's HTTP API. Production refuses to start sending unless it is explicitly set, and the email provider's response body is never logged.
+- **Ownership:** `Form.ownerAccountId` is set on first publish. Publish returns 401 signed out and 403 for someone else's link name; unpublish returns 404 for non-owners so slugs cannot be probed. Forms from before accounts are claimed by the first signed-in publisher.
+- **Drafts:** new `Draft` model (unique per owner + form id) and `GET/PUT /api/drafts/[id]`. Saving is deliberately lenient (a half-edited form must save); publishing still runs the full schema check. `/dashboard` lists my forms, `/builder/new` starts one with a random id (which is also its default public link), `/builder/[id]` reopens one, and the bare `/builder` redirects to the dashboard.
+- **`@hardikrastogi/builder` 0.4.0:** new `onSave` prop. With it, the debounced autosave goes to the host and the save indicator shows its result; edits made while a save is in flight are not marked saved. Without it the builder still uses localStorage.
+- Header shows Sign in, or My forms and Sign out. It reads the session in the browser so the docs pages stay static.
+
+**Decisions:**
+- **Magic link only for now; Google is deferred.** Fewer moving parts to verify, and it needs no third-party app registration.
+- **No middleware.** Each route handler and server page checks the session itself, which keeps auth code in one small helper and avoids Edge runtime limits with the database adapter.
+- **Random form ids** for new forms, so two creators never fight over the same public link name.
+
+**Real problems found by running it:**
+- Auth.js builds sign-in links on `localhost` under `next start` regardless of the address the browser used, so an e2e suite browsing `127.0.0.1` never received the session cookie. The tests now use `localhost`.
+- A server action that redirected back to the same page with an error in the URL silently did nothing; the form now uses `useActionState` and shows the error inline.
+- My first pages were created one folder too high (`src/signin` instead of `src/app/signin`), so the sign-in page 404ed until moved.
+- The disk filled up (turbo's build cache had grown to 1.4 GB), which made unrelated e2e tests fail with `ENOSPC`. Not a code bug; cache cleared.
+
+**Tests:** 2 new builder tests (44 total), 10 new e2e tests (sign-in redirect, real magic-link flow including single-use, invalid email, open-redirect guard, 401s, cross-account ownership and draft privacy, draft id checks, dashboard listing, autosave failure display, accessibility of builder and dashboard). Existing e2e tests now sign in first. 71 e2e tests total.
+
+**Not built yet / owner tasks:** Resend account and a verified domain (SPF/DKIM) so production emails deliver; Vercel env vars `AUTH_SECRET`, `EMAIL_TRANSPORT=resend`, `RESEND_API_KEY`, `EMAIL_FROM`; Google sign-in; account settings/deletion; rate limiting on sign-in requests.

@@ -142,12 +142,16 @@ The smallest possible slice that's a genuinely working hosted form.
 
 ### Phase 5b — Creator accounts
 
-- [ ] Auth.js (NextAuth v5): email magic link + optional "Continue with Google," using the MongoDB adapter (no passwords — avoids storing/resetting them, per the earlier decision)
-- [ ] Requires a real domain with SPF/DKIM set up for reliable magic-link delivery
-- [ ] Forms are owned by an `Account`; only the owner can edit/publish/view responses for their forms
-- [ ] Save-state indicator wired to real autosave (debounced PATCH as the builder edits, replacing the builder's current localStorage stand-in)
+- [x] Auth.js (NextAuth v5) email magic link with the MongoDB adapter; no passwords. Links are single-use and expire in 15 minutes
+- [x] Email delivery is pluggable via `EMAIL_TRANSPORT`: `console` (link printed in the terminal, local only) or `resend` (real email through Resend's HTTP API)
+- [ ] Real email needs a Resend account plus a domain with SPF/DKIM set up (owner task; production sign-in does not work until this is done)
+- [ ] "Continue with Google": deferred, magic link only for now
+- [x] Forms are owned by the account that first publishes them; only the owner can republish or unpublish (403/404 for anyone else). Ownerless forms from before accounts are claimed by the first signed-in publisher
+- [x] Drafts: the builder autosaves to the account (`PUT /api/drafts/[id]`, debounced) instead of localStorage; `/dashboard` lists my forms; `/builder/[id]` reopens one
+- [x] Builder package: new `onSave` prop (0.4.0); without it the builder still falls back to localStorage
+- [ ] Viewing responses is owner-only, but the response dashboard itself is Phase 5d
 
-**Milestone:** you have to sign in to build/manage forms; the builder's autosave now hits a real backend instead of localStorage.
+**Milestone:** you have to sign in to build/manage forms; the builder's autosave hits a real backend instead of localStorage.
 
 ### Phase 5c — Verified-email respondents
 

@@ -11,6 +11,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@auth/mongodb-adapter": "^3.11.3",
     "@base-ui/react": "^1.8.0",
     "@hardikrastogi/builder": "workspace:*",
     "@hardikrastogi/core": "workspace:*",
@@ -18,8 +19,10 @@
     "class-variance-authority": "^0.7.1",
     "cn": "^0.3.0",
     "lucide-react": "^1.47.0",
+    "mongodb": "^6.20.0",
     "mongoose": "^8.9.0",
     "next": "16.3.5",
+    "next-auth": "5.0.0-beta.32",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "shadcn": "^4.21.0",

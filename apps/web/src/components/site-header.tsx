@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { AuthNav } from "./auth-nav";
 
 const links = [
   { href: "/docs", label: "Docs" },
   { href: "/playground", label: "Playground" },
-  { href: "/builder", label: "Builder" },
+  { href: "/dashboard", label: "Builder" },
   { href: "https://www.npmjs.com/package/@hardikrastogi/react", label: "npm", external: true },
 ];
 
@@ -32,6 +33,7 @@ export function SiteHeader() {
               </Link>
             ),
           )}
+          <AuthNav />
         </nav>
       </div>
     </header>

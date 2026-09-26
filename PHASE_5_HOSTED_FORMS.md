@@ -2,7 +2,7 @@
 
 A standalone, exhaustive technical reference for Phase 5a (the only Phase 5 sub-phase built so far). Kept separate from `ROADMAP.md` (the plan) and `BUILD_LOG.md` (the running summary) — this file goes line-by-line through what exists, function by function, so you can read it without needing to re-derive anything from the source.
 
-Covers 5a only: **publish, share, and anonymous (`anyone`-mode) submissions.** Creator accounts, verified respondents, and the response dashboard are 5b–5e, not yet built.
+Covers 5a: **publish, share, and anonymous (`anyone`-mode) submissions.** Note: Phase 5b (creator accounts) has since landed and changed some behaviour described below: publishing and unpublishing now require sign-in and are owner-only, and the builder saves drafts to the account. See the 5b notes in `BUILD_LOG.md` and `ARCHITECTURE.md` (Auth Flow). Verified respondents and the response dashboard (5c–5e) are not yet built.
 
 ---
 
@@ -55,7 +55,7 @@ All three live in `apps/web/src/lib/db/models/`.
 | Field | Meaning | Enforced yet? |
 |---|---|---|
 | `slug` | The URL segment (`/f/<slug>`). Unique across all forms. | Yes — unique index, checked on every publish |
-| `ownerAccountId` | Which creator account owns this form. | **No** — always `null` until Phase 5b adds accounts. Anyone can currently republish any slug. |
+| `ownerAccountId` | Which creator account owns this form. | **Yes since 5b** — set by the first signed-in publisher; only that account can republish or unpublish. Forms published before 5b have `null` and are claimed by the first signed-in publisher. |
 | `published` | Whether `/f/<slug>` and the submit route accept traffic. | Yes |
 | `currentVersionId` | Points at the `FormVersion` currently live. | Yes |
 | `allowResponseEditing` | Whether a respondent can edit their own past answer. | **No** — field exists, no code reads it yet (Phase 5d) |
@@ -434,7 +434,7 @@ docker exec formora-mongo mongosh formora_dev --eval 'db.submissions.find().toAr
 
 Stated explicitly so nothing here is mistaken for a bug:
 
-- **No ownership/authorization.** Anyone who knows or guesses a slug can currently republish it. Fixed in 5b once accounts + `ownerAccountId` are actually checked.
+- ~~No ownership/authorization.~~ Fixed in 5b: publish and unpublish check `ownerAccountId`. Remaining gap: ownerless forms from before accounts can be claimed by the first signed-in publisher.
 - **No respondent identity.** `respondentIdentityId` exists on `Submission` but is always `null` — meaningless until 5c adds verified-email respondents.
 - **`allowResponseEditing` and `limitOneResponsePerRespondent` are stored but inert** — no code path reads or enforces them yet.
 - **No builder UI for `closesAt` / `maxResponses`** — they can only be set by hand-editing the database right now, even though the submit route already enforces them.

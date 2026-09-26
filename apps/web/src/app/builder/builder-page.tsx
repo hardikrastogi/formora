@@ -1,89 +1,74 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Builder, createBlankDefinition, loadFromStorage, type PublishResult } from "@hardikrastogi/builder";
+import { useMemo } from "react";
+import Link from "next/link";
+import { Builder, createBlankDefinition, type PublishResult } from "@hardikrastogi/builder";
 import "@hardikrastogi/builder/styles.css";
 import type { FormDefinition } from "@hardikrastogi/core";
 
-const DEMO_FORM_ID = "builder-demo";
-const STORAGE_KEY = `formora-builder:${DEMO_FORM_ID}`;
-// Stand-in until creator accounts (Phase 5b) can answer "which of my forms are live?" from the server.
-const PUBLISHED_KEY = `formora-builder-published:${DEMO_FORM_ID}`;
-
-function loadPublished(): PublishResult | null {
-  try {
-    const raw = window.localStorage.getItem(PUBLISHED_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<PublishResult>;
-    return typeof parsed.url === "string" ? { url: parsed.url, slug: parsed.slug } : null;
-  } catch {
-    return null;
-  }
+async function errorMessage(res: Response, fallback: string): Promise<string> {
+  const body = await res.json().catch(() => ({}));
+  return typeof body.error === "string" ? body.error : fallback;
 }
 
-function savePublished(result: PublishResult | null) {
-  try {
-    if (result) window.localStorage.setItem(PUBLISHED_KEY, JSON.stringify(result));
-    else window.localStorage.removeItem(PUBLISHED_KEY);
-  } catch {
-    // Storage can be unavailable (private mode); losing this only means the
-    // Unpublish button isn't offered after a reload, never a broken publish.
-  }
-}
+export function BuilderPage({
+  formId,
+  initialDefinition,
+  initialPublished,
+}: {
+  formId: string;
+  initialDefinition: FormDefinition | null;
+  initialPublished: PublishResult | null;
+}) {
+  const definition = useMemo(
+    () => initialDefinition ?? createBlankDefinition(formId, "My form"),
+    [initialDefinition, formId],
+  );
 
-async function publishForm(definition: FormDefinition): Promise<PublishResult> {
-  const res = await fetch("/api/forms/publish", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ definition }),
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? "Could not publish this form. Please try again.");
-  }
-  const data = (await res.json()) as { url: string; slug: string };
-  const result = { url: data.url, slug: data.slug };
-  savePublished(result);
-  return result;
-}
-
-async function unpublishForm(published: PublishResult): Promise<void> {
-  if (!published.slug) throw new Error("Cannot unpublish: this form's link is missing its slug.");
-  const res = await fetch(`/api/forms/${encodeURIComponent(published.slug)}/unpublish`, { method: "POST" });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? "Could not unpublish this form. Please try again.");
-  }
-  savePublished(null);
-}
-
-export function BuilderPage() {
-  const [initial, setInitial] = useState<{ definition: FormDefinition; published: PublishResult | null } | null>(null);
-
-  useEffect(() => {
-    // localStorage doesn't exist during server-side prerendering, so this must run
-    // client-side only, after mount — that's why it's a real effect, not a lazy useState initializer.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setInitial({
-      definition: loadFromStorage(STORAGE_KEY) ?? createBlankDefinition(DEMO_FORM_ID, "My form"),
-      published: loadPublished(),
+  async function saveDraft(next: FormDefinition): Promise<void> {
+    const res = await fetch(`/api/drafts/${encodeURIComponent(formId)}`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ definition: next }),
     });
-  }, []);
+    if (!res.ok) throw new Error(await errorMessage(res, "Could not save."));
+  }
 
-  if (!initial) return null;
+  async function publishForm(next: FormDefinition): Promise<PublishResult> {
+    const res = await fetch("/api/forms/publish", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ definition: next }),
+    });
+    if (!res.ok) throw new Error(await errorMessage(res, "Could not publish this form. Please try again."));
+    const data = (await res.json()) as { url: string; slug: string };
+    return { url: data.url, slug: data.slug };
+  }
+
+  async function unpublishForm(published: PublishResult): Promise<void> {
+    if (!published.slug) throw new Error("Cannot unpublish: this form's link is missing its slug.");
+    const res = await fetch(`/api/forms/${encodeURIComponent(published.slug)}/unpublish`, { method: "POST" });
+    if (!res.ok) throw new Error(await errorMessage(res, "Could not unpublish this form. Please try again."));
+  }
 
   return (
     <div className="mx-auto flex h-[calc(100vh-3.5rem)] max-w-6xl flex-col px-4 py-4">
-      <h1 className="text-lg font-semibold">Builder</h1>
+      <div className="flex items-baseline justify-between">
+        <h1 className="text-lg font-semibold">Builder</h1>
+        <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
+          All my forms
+        </Link>
+      </div>
       <p className="mb-3 text-sm text-muted-foreground">
-        Drag fields from the palette, or click one to add it. Select a field to edit it on the right, then Publish to
-        get a shareable link anyone can fill out. Unpublish stops the link from accepting responses; publish again
-        any time to bring it back.
+        Drag fields from the palette, or click one to add it. Select a field to edit it on the right. Changes save to
+        your account automatically. Publish to get a shareable link anyone can fill out; Unpublish stops it
+        accepting responses, and you can publish again any time.
       </p>
       <div className="min-h-0 flex-1">
         <Builder
-          initialDefinition={initial.definition}
-          initialPublished={initial.published}
+          initialDefinition={definition}
+          initialPublished={initialPublished}
+          onSave={saveDraft}
           onPublish={publishForm}
           onUnpublish={unpublishForm}
         />

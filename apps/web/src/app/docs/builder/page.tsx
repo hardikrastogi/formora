@@ -112,6 +112,15 @@ export default function BuilderDocsPage() {
         <tbody>
           <tr>
             <td>
+              <code>onSave(definition)</code>
+            </td>
+            <td>
+              Autosave to your own backend. Called (debounced) after edits; throw to show &quot;Could not save&quot;.
+              Without it, edits are saved to the browser&apos;s local storage instead.
+            </td>
+          </tr>
+          <tr>
+            <td>
               <code>onPublish(definition)</code>
             </td>
             <td>

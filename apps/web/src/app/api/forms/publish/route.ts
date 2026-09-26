@@ -4,8 +4,12 @@ import { connectToDatabase } from "@/lib/db/connect";
 import { FormModel } from "@/lib/db/models/Form";
 import { FormVersionModel } from "@/lib/db/models/FormVersion";
 import { isValidSlug, slugify } from "@/lib/slug";
+import { getUserId } from "@/lib/auth/session";
 
 export async function POST(request: Request) {
+  const userId = await getUserId();
+  if (!userId) return NextResponse.json({ error: "Sign in to publish a form." }, { status: 401 });
+
   let body: unknown;
   try {
     body = await request.json();
@@ -32,15 +36,18 @@ export async function POST(request: Request) {
 
   await connectToDatabase();
 
-  // Publishing again with the same slug republishes (bumps) that same form —
-  // there's no separate "form ownership" check yet since creator accounts
-  // arrive in Phase 5b. Two unrelated forms that happen to derive the same
-  // slug would collide; a real slug-uniqueness UI is Phase 5b/5d work.
+  // Publishing again with the same slug republishes that form, but only for
+  // its owner. A form with no owner predates accounts, and is claimed by the
+  // first signed-in creator to publish it.
   const form = await FormModel.findOneAndUpdate(
     { slug },
-    { $setOnInsert: { slug } },
+    { $setOnInsert: { slug, ownerAccountId: userId } },
     { new: true, upsert: true },
   );
+  if (form.ownerAccountId && form.ownerAccountId !== userId) {
+    return NextResponse.json({ error: "That link name is already taken." }, { status: 403 });
+  }
+  form.ownerAccountId = userId;
 
   const version = await FormVersionModel.create({
     formId: form._id,
