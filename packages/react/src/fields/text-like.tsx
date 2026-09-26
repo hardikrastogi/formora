@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { cx, type FieldRendererProps, type ReactFieldPlugin } from "../types";
 import { str } from "./options";
+import { EMAIL_PATTERN, URL_PATTERN } from "./patterns";
 
 type TextInputKind = "text" | "email" | "date" | "url" | "time";
 
@@ -46,7 +47,6 @@ function TextareaInput(p: FieldRendererProps) {
   );
 }
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const textPlugin: ReactFieldPlugin = {
   type: "text",
@@ -88,7 +88,6 @@ export const timePlugin: ReactFieldPlugin = {
   Renderer: makeInput("time"),
 };
 
-const URL_PATTERN = /^https?:\/\/[^\s/$.?#].[^\s]*$/i;
 
 export const urlPlugin: ReactFieldPlugin = {
   type: "url",

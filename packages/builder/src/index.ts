@@ -1,4 +1,5 @@
-export { Builder, type BuilderProps } from "./Builder";
+export { Builder, type BuilderProps, type PublishResult } from "./Builder";
+export { type PublishState } from "./TopBar";
 export { createBlankDefinition } from "./blank";
 export { FIELD_CATALOG, FIELD_CATEGORIES, fieldMetaFor } from "./field-catalog";
 export { createBuilderStore, type BuilderStore, type FieldTypeMeta } from "./store";

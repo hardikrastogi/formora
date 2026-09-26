@@ -1,6 +1,6 @@
 {
   "name": "@hardikrastogi/react",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Headless React renderer that turns a Formora FormDefinition into a working form.",
   "license": "MIT",
   "type": "module",
@@ -12,6 +12,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js",
+      "require": "./dist/server.cjs"
     },
     "./styles.css": "./dist/styles.css"
   },

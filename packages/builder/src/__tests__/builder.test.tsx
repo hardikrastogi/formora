@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach, vi } from "vitest";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Builder } from "../Builder";
@@ -170,6 +170,53 @@ describe("Builder", () => {
       { timeout: 2000 },
     );
     expect(await screen.findByText("Saved")).toBeInTheDocument();
+  });
+
+  it("has no Publish button when onPublish is not provided, and Share stays disabled", () => {
+    renderBuilder();
+    expect(screen.queryByRole("button", { name: "Publish" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Share" })).toBeDisabled();
+  });
+
+  it("publishing shows a pending state, then the live URL, and enables Share", async () => {
+    const user = userEvent.setup();
+    let resolvePublish: (v: { url: string }) => void = () => {};
+    const onPublish = vi.fn(() => new Promise<{ url: string }>((resolve) => (resolvePublish = resolve)));
+    render(<Builder initialDefinition={createBlankDefinition("form_1", "My form")} onPublish={onPublish} />);
+
+    const publishButton = screen.getByRole("button", { name: "Publish" });
+    await user.click(publishButton);
+    expect(screen.getByRole("button", { name: "Publishing…" })).toBeDisabled();
+    expect(onPublish).toHaveBeenCalledWith(expect.objectContaining({ id: "form_1" }));
+
+    resolvePublish({ url: "/f/my-form" });
+    expect(await screen.findByRole("link", { name: "/f/my-form" })).toHaveAttribute("href", "/f/my-form");
+    expect(screen.getByRole("button", { name: "Republish" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Share" })).toBeEnabled();
+  });
+
+  it("shows an error message if publishing fails, without losing the form", async () => {
+    const user = userEvent.setup();
+    const onPublish = vi.fn().mockRejectedValue(new Error("Network error"));
+    render(<Builder initialDefinition={createBlankDefinition("form_1", "My form")} onPublish={onPublish} />);
+
+    await user.click(screen.getByRole("button", { name: "Publish" }));
+    expect(await screen.findByText("Network error")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Publish" })).toBeEnabled();
+  });
+
+  it("Share copies the published URL to the clipboard when Web Share isn't available", async () => {
+    const writeText = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "share", { value: undefined, configurable: true });
+    const user = userEvent.setup();
+    const onPublish = vi.fn().mockResolvedValue({ url: "/f/my-form" });
+    render(<Builder initialDefinition={createBlankDefinition("form_1", "My form")} onPublish={onPublish} />);
+
+    await user.click(screen.getByRole("button", { name: "Publish" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Share" })).toBeEnabled());
+    await user.click(screen.getByRole("button", { name: "Share" }));
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(expect.stringContaining("/f/my-form")));
   });
 
   it("two Builder instances with different ids keep separate state and storage", async () => {

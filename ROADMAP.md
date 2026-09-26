@@ -120,24 +120,24 @@ This phase turns Formora into a Google Forms alternative. It's the largest phase
 
 ---
 
-### Phase 5a — Publish, share, and the simplest respondent flow (`anyone` mode)
+### Phase 5a — Publish, share, and the simplest respondent flow (`anyone` mode) ✅ DONE
 
 The smallest possible slice that's a genuinely working hosted form.
 
-- [ ] MongoDB Atlas connected via Mongoose — app-layer only, `.env`-based connection string (per the earlier secrets decision)
-- [ ] `Form` document: `ownerAccountId`, `slug`, `published`, `currentVersion`, timestamps — separate from `FormDefinition`
-- [ ] `FormVersion` document: an immutable snapshot of a `FormDefinition` at publish time
-- [ ] Publish/unpublish controls in the builder; publishing snapshots the current definition into a new `FormVersion`
-- [ ] Public page at `/f/[slug]` rendering the published `FormVersion` via `FormRenderer` — no Formora account required
-- [ ] Submission API route: validate the answers against `core`'s Zod schema **again on the server**, then persist via Mongoose
-- [ ] `FormSubmission` records which `FormVersion` (not just which `schemaVersion` number) it answered
-- [ ] Success state after submit: "Your submission has been recorded," only shown after the server confirms it was saved
-- [ ] Idempotency key per submission attempt (unique index on `formId + key`) so retries/double-clicks can't create duplicates
-- [ ] OG meta tags on `/f/[slug]` for WhatsApp/email/social link previews
-- [ ] Unpublishing rejects new submissions but keeps the form and its existing data intact
-- [ ] A per-form `limitOneResponsePerRespondent`, close date, and max-responses cap (basic anti-spam — `anyone` mode has no identity to rate-limit otherwise)
+- [x] MongoDB connected via Mongoose — app-layer only, `.env`-based connection string (local Docker for now; Atlas is a drop-in swap of `MONGODB_URI` later, per the earlier secrets decision)
+- [x] `Form` document: `slug`, `published`, `currentVersionId`, `ownerAccountId` (nullable until 5b), `allowResponseEditing`/`limitOneResponsePerRespondent`/`closesAt`/`maxResponses` — separate from `FormDefinition`
+- [x] `FormVersion` document: an immutable snapshot of a `FormDefinition` at publish time
+- [x] Publish/Republish button + live share-link display in the builder's top bar; a Share button that uses the Web Share API or falls back to copying the link
+- [x] Public page at `/f/[slug]` rendering the published `FormVersion` via `FormRenderer` — no Formora account required
+- [x] Submission API route: validate the answers against `core`'s Zod schema **and** each field type's format check (email/url) again on the server, then persist via Mongoose
+- [x] `FormSubmission` records which `FormVersion` (not just which `schemaVersion` number) it answered
+- [x] Success state after submit: "Your submission has been recorded," only shown after the server confirms it was saved
+- [x] Idempotency key per submission attempt (unique index on `formId + idempotencyKey`) so retries/double-clicks can't create duplicates
+- [x] OG meta tags on `/f/[slug]` for WhatsApp/email/social link previews
+- [x] Unpublishing (410 on new submissions) and a never-published/unknown slug (404) both handled distinctly
+- [x] `Form` schema has `limitOneResponsePerRespondent`, `closesAt`, `maxResponses` fields (max-responses cap enforced in the submit route; the other two are stored but not yet enforced — no builder UI exposes them yet either)
 
-**Milestone:** build a form, publish it, share the link, have someone (anonymously) fill it out, see it land in MongoDB. This alone is a complete, demoable product loop.
+**Milestone met:** build a form, publish it, share the link, have someone (anonymously) fill it out, see it land in MongoDB. Verified for real — not just built — against a running MongoDB, including idempotent retries, republishing, and unpublish/404 handling. 17 new automated tests (unit + e2e).
 
 ### Phase 5b — Creator accounts
 
