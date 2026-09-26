@@ -219,6 +219,128 @@ describe("Builder", () => {
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(expect.stringContaining("/f/my-form")));
   });
 
+  it("has no Unpublish button unless the form is published and onUnpublish is provided", async () => {
+    const user = userEvent.setup();
+    const onPublish = vi.fn().mockResolvedValue({ url: "/f/my-form", slug: "my-form" });
+    const onUnpublish = vi.fn().mockResolvedValue(undefined);
+    render(
+      <Builder
+        initialDefinition={createBlankDefinition("form_1", "My form")}
+        onPublish={onPublish}
+        onUnpublish={onUnpublish}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Unpublish" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Publish" }));
+    expect(await screen.findByRole("button", { name: "Unpublish" })).toBeInTheDocument();
+  });
+
+  it("does not show Unpublish when the host provides no onUnpublish", async () => {
+    const user = userEvent.setup();
+    const onPublish = vi.fn().mockResolvedValue({ url: "/f/my-form" });
+    render(<Builder initialDefinition={createBlankDefinition("form_1", "My form")} onPublish={onPublish} />);
+    await user.click(screen.getByRole("button", { name: "Publish" }));
+    await screen.findByRole("link", { name: "/f/my-form" });
+    expect(screen.queryByRole("button", { name: "Unpublish" })).not.toBeInTheDocument();
+  });
+
+  it("Unpublish hands the last publish result back to the host, then clears the live link and disables Share", async () => {
+    const user = userEvent.setup();
+    const onPublish = vi.fn().mockResolvedValue({ url: "/f/my-form", slug: "my-form" });
+    const onUnpublish = vi.fn().mockResolvedValue(undefined);
+    render(
+      <Builder
+        initialDefinition={createBlankDefinition("form_1", "My form")}
+        onPublish={onPublish}
+        onUnpublish={onUnpublish}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Publish" }));
+    await screen.findByRole("link", { name: "/f/my-form" });
+    await user.click(screen.getByRole("button", { name: "Unpublish" }));
+
+    expect(onUnpublish).toHaveBeenCalledWith({ url: "/f/my-form", slug: "my-form" });
+    expect(await screen.findByText(/no longer accepts responses/)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "/f/my-form" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Share" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Publish" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Unpublish" })).not.toBeInTheDocument();
+  });
+
+  it("shows Unpublishing... while it runs, and disables both buttons so nothing can be clicked twice", async () => {
+    const user = userEvent.setup();
+    let finish: () => void = () => {};
+    const onUnpublish = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));
+    render(
+      <Builder
+        initialDefinition={createBlankDefinition("form_1", "My form")}
+        onPublish={vi.fn()}
+        onUnpublish={onUnpublish}
+        initialPublished={{ url: "/f/my-form", slug: "my-form" }}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Unpublish" }));
+    expect(screen.getByRole("button", { name: "Unpublishing…" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Republish" })).toBeDisabled();
+
+    finish();
+    expect(await screen.findByRole("button", { name: "Publish" })).toBeEnabled();
+  });
+
+  it("keeps the form published and shows the error if unpublishing fails", async () => {
+    const user = userEvent.setup();
+    const onUnpublish = vi.fn().mockRejectedValue(new Error("Server is down"));
+    render(
+      <Builder
+        initialDefinition={createBlankDefinition("form_1", "My form")}
+        onPublish={vi.fn()}
+        onUnpublish={onUnpublish}
+        initialPublished={{ url: "/f/my-form", slug: "my-form" }}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Unpublish" }));
+    expect(await screen.findByText("Server is down")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "/f/my-form" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Unpublish" })).toBeEnabled();
+  });
+
+  it("initialPublished shows the live link, Share, and Republish immediately", () => {
+    render(
+      <Builder
+        initialDefinition={createBlankDefinition("form_1", "My form")}
+        onPublish={vi.fn()}
+        initialPublished={{ url: "/f/remembered", slug: "remembered" }}
+      />,
+    );
+    expect(screen.getByRole("link", { name: "/f/remembered" })).toHaveAttribute("href", "/f/remembered");
+    expect(screen.getByRole("button", { name: "Republish" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Share" })).toBeEnabled();
+  });
+
+  it("publishing again after an unpublish brings the live link back", async () => {
+    const user = userEvent.setup();
+    const onPublish = vi.fn().mockResolvedValue({ url: "/f/my-form", slug: "my-form" });
+    const onUnpublish = vi.fn().mockResolvedValue(undefined);
+    render(
+      <Builder
+        initialDefinition={createBlankDefinition("form_1", "My form")}
+        onPublish={onPublish}
+        onUnpublish={onUnpublish}
+        initialPublished={{ url: "/f/my-form", slug: "my-form" }}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "Unpublish" }));
+    await screen.findByText(/no longer accepts responses/);
+
+    await user.click(screen.getByRole("button", { name: "Publish" }));
+    expect(await screen.findByRole("link", { name: "/f/my-form" })).toBeInTheDocument();
+    expect(screen.queryByText(/no longer accepts responses/)).not.toBeInTheDocument();
+  });
+
   it("two Builder instances with different ids keep separate state and storage", async () => {
     const user = userEvent.setup();
     const { unmount } = render(<Builder initialDefinition={createBlankDefinition("form_a", "A")} />);

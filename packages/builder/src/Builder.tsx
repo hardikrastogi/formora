@@ -13,6 +13,8 @@ import type { FieldTypeMeta } from "./store";
 export interface PublishResult {
   /** Absolute or root-relative URL where the published form can be viewed. */
   url: string;
+  /** Host-defined identifier for the published form; handed back to onUnpublish. */
+  slug?: string;
 }
 
 export interface BuilderProps {
@@ -27,15 +29,28 @@ export interface BuilderProps {
    * context that has nothing to publish to.
    */
   onPublish?: (definition: FormDefinition) => Promise<PublishResult>;
+  /**
+   * Called when the user clicks Unpublish, with the result of the last
+   * publish. Omit to hide the Unpublish button. Unpublishing is reversible —
+   * clicking Publish again brings the form back.
+   */
+  onUnpublish?: (published: PublishResult) => Promise<void>;
+  /**
+   * If the form is already published when the builder opens (for example the
+   * host remembered it from a previous visit), pass that here so the live
+   * link, Share, and Unpublish are available immediately.
+   */
+  initialPublished?: PublishResult | null;
 }
 
-function BuilderInner({
-  storageKey,
-  onPublish,
-}: {
+interface BuilderInnerProps {
   storageKey: string;
-  onPublish?: (definition: FormDefinition) => Promise<PublishResult>;
-}) {
+  onPublish?: BuilderProps["onPublish"];
+  onUnpublish?: BuilderProps["onUnpublish"];
+  initialPublished?: PublishResult | null;
+}
+
+function BuilderInner({ storageKey, onPublish, onUnpublish, initialPublished }: BuilderInnerProps) {
   const definition = useBuilder((s) => s.definition);
   const mode = useBuilder((s) => s.mode);
   const isDirty = useBuilder((s) => s.isDirty);
@@ -47,8 +62,10 @@ function BuilderInner({
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   const [publishState, setPublishState] = useState<PublishState>("idle");
-  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const [published, setPublished] = useState<PublishResult | null>(initialPublished ?? null);
   const [publishError, setPublishError] = useState<string | null>(null);
+  const [unpublished, setUnpublished] = useState(false);
+  const publishedUrl = published?.url ?? null;
 
   async function handlePublish() {
     if (!onPublish) return;
@@ -56,11 +73,27 @@ function BuilderInner({
     setPublishError(null);
     try {
       const result = await onPublish(definition);
-      setPublishedUrl(result.url);
+      setPublished(result);
+      setUnpublished(false);
       setPublishState("idle");
     } catch (err) {
       setPublishState("error");
       setPublishError(err instanceof Error && err.message ? err.message : "Could not publish. Please try again.");
+    }
+  }
+
+  async function handleUnpublish() {
+    if (!onUnpublish || !published) return;
+    setPublishState("unpublishing");
+    setPublishError(null);
+    try {
+      await onUnpublish(published);
+      setPublished(null);
+      setUnpublished(true);
+      setPublishState("idle");
+    } catch (err) {
+      setPublishState("error");
+      setPublishError(err instanceof Error && err.message ? err.message : "Could not unpublish. Please try again.");
     }
   }
 
@@ -119,6 +152,8 @@ function BuilderInner({
       <TopBar
         saveState={saveState}
         onPublish={onPublish ? handlePublish : undefined}
+        onUnpublish={onUnpublish ? handleUnpublish : undefined}
+        unpublished={unpublished}
         publishState={publishState}
         publishedUrl={publishedUrl}
         publishError={publishError}
@@ -149,10 +184,15 @@ function BuilderInner({
   );
 }
 
-export function Builder({ initialDefinition, storageKey, onPublish }: BuilderProps) {
+export function Builder({ initialDefinition, storageKey, onPublish, onUnpublish, initialPublished }: BuilderProps) {
   return (
     <BuilderProvider initialDefinition={initialDefinition}>
-      <BuilderInner storageKey={storageKey ?? `formora-builder:${initialDefinition.id}`} onPublish={onPublish} />
+      <BuilderInner
+        storageKey={storageKey ?? `formora-builder:${initialDefinition.id}`}
+        onPublish={onPublish}
+        onUnpublish={onUnpublish}
+        initialPublished={initialPublished}
+      />
     </BuilderProvider>
   );
 }

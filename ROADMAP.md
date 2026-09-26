@@ -135,6 +135,7 @@ The smallest possible slice that's a genuinely working hosted form.
 - [x] Idempotency key per submission attempt (unique index on `formId + idempotencyKey`) so retries/double-clicks can't create duplicates
 - [x] OG meta tags on `/f/[slug]` for WhatsApp/email/social link previews
 - [x] Unpublishing (410 on new submissions) and a never-published/unknown slug (404) both handled distinctly
+- [x] Unpublish button in the builder (`onUnpublish` + `initialPublished`), survives reload; docs cover `onPublish`/`onUnpublish` and `@hardikrastogi/react/server`
 - [x] `Form` schema has `limitOneResponsePerRespondent`, `closesAt`, `maxResponses` fields (max-responses cap enforced in the submit route; the other two are stored but not yet enforced — no builder UI exposes them yet either)
 
 **Milestone met:** build a form, publish it, share the link, have someone (anonymously) fill it out, see it land in MongoDB. Verified for real — not just built — against a running MongoDB, including idempotent retries, republishing, and unpublish/404 handling. 17 new automated tests (unit + e2e).

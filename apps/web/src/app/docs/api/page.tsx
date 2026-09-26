@@ -120,6 +120,52 @@ export default function ApiPage() {
           <code>FieldConfig</code>, <code>Theme</code>, <code>FieldTypePlugin</code> and more.
         </li>
       </ul>
+
+      <h2>@hardikrastogi/react/server</h2>
+      <p>
+        A separate, server-safe entry point with no React in it. The main entry is a client bundle, and frameworks
+        such as Next.js refuse to load anything from it in server code, so server checks live here instead.
+      </p>
+      <ul>
+        <li>
+          <code>collectServerErrors(definition, answers)</code>: returns <code>{"{ [fieldId]: string[] }"}</code>.
+          Runs core&apos;s required, length, range and pattern rules plus the email and URL format checks, the same
+          combination the form runs in the browser. An empty object means the answers are valid. A custom field type
+          that only exists in the browser cannot be re-checked here.
+        </li>
+      </ul>
+
+      <h2>@hardikrastogi/builder</h2>
+      <ul>
+        <li>
+          <code>Builder</code>: the editor. Props: <code>initialDefinition</code> (required), <code>storageKey</code>,{" "}
+          <code>onPublish</code>, <code>onUnpublish</code>, <code>initialPublished</code>. See the{" "}
+          <a href="/docs/builder">builder page</a> for what each does.
+        </li>
+        <li>
+          <code>createBlankDefinition(id, name?)</code>: an empty <code>FormDefinition</code> to start from.
+        </li>
+        <li>
+          <code>loadFromStorage(key)</code>: reads a definition the builder autosaved to local storage, or{" "}
+          <code>null</code>.
+        </li>
+        <li>
+          <code>FIELD_CATALOG</code>, <code>FIELD_CATEGORIES</code>, <code>fieldMetaFor(type)</code>: the field types
+          shown in the palette.
+        </li>
+        <li>
+          <code>createBuilderStore</code>, <code>BuilderProvider</code>, <code>useBuilder(selector)</code>: the state
+          behind the editor, for building your own UI around it.
+        </li>
+        <li>
+          <code>contrastAgainstWhite(hex)</code>, <code>WCAG_AA_NORMAL_TEXT</code>: the accessibility contrast check
+          used on the theme colour.
+        </li>
+        <li>
+          Types: <code>BuilderProps</code>, <code>PublishResult</code>, <code>PublishState</code>,{" "}
+          <code>BuilderStore</code>, <code>FieldTypeMeta</code>.
+        </li>
+      </ul>
     </>
   );
 }
