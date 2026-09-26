@@ -88,17 +88,45 @@ The store lives entirely in the browser tab; nothing here talks to a network yet
 
 ---
 
-## Form-Filling Flow (Respondent)
+## Publishing Flow — implemented in Phase 5a
 
-*(To be filled in once Phase 5's hosted forms exist. Placeholder shape:)*
+```
+Creator clicks Publish in the builder
+   → apps/web's publishForm() → POST /api/forms/publish { definition }
+   → server validates with core's FormDefinitionSchema
+   → Form.findOneAndUpdate({ slug }, ..., { upsert: true })   (slug defaults to definition.id)
+   → FormVersion.create({ formId, definition, schemaVersion })   ← an IMMUTABLE snapshot, never edited again
+   → Form.currentVersionId = new version; Form.published = true
+   → builder shows "Live at /f/slug" + enables Share
+
+Editing the form afterward touches ONLY the in-memory FormDefinition (still autosaved to
+localStorage, Phase 4-style) — it can't retroactively change a version a respondent already
+saw. Only clicking Publish again creates the NEXT version.
+```
+
+## Form-Filling Flow (Respondent) — implemented in Phase 5a
 
 ```
 Respondent opens /f/[slug]
-   → Next.js server fetches FormDefinition + schemaVersion from MongoDB
-   → @hardikrastogi/react renders it client-side, wired to react-hook-form
-   → Respondent fills form → client-side validation via core's Zod schema
-   → Submit → POST to API route → re-validated server-side → FormSubmission persisted
+   → getPublishedFormBySlug(slug): Form.findOne({ slug }) → must be published
+        → FormVersion.findById(currentVersionId)
+        → FormDefinitionSchema.safeParse(version.definition)   (fail closed on corruption)
+        → null at any step → Next.js notFound() → real 404, not a broken page
+   → generateMetadata() adds OG title/description from the definition's name
+   → @hardikrastogi/react's <FormRenderer> renders it client-side (packages/f/[slug]/public-form.tsx)
+   → Respondent fills form → client-side validation (core + field-type checks, same as always)
+   → Submit → POST /api/forms/[slug]/submit { answers, idempotencyKey }
+        → re-fetch the form; reject if unpublished (410), closed, or over maxResponses
+        → collectServerErrors() from @hardikrastogi/react/server — re-runs core's rules
+          AND the email/url format checks server-side (client validation is not trusted)
+        → Submission.create(); a repeated idempotencyKey returns the ORIGINAL submission
+          instead of erroring or duplicating
+   → "Your submission has been recorded." only shown after the server call succeeds
 ```
+
+`@hardikrastogi/react/server` is a second, separate build of the package with no `"use client"`
+banner — the main entry is entirely client-tagged (required for `<FormRenderer>`), and Next.js
+blocks importing anything at all from a `"use client"` module in server code, even pure functions.
 
 ---
 

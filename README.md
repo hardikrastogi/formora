@@ -12,7 +12,7 @@ Describe a form as one JSON document and render a working, validated, themeable 
 
 ## Status
 
-Early, versioned 0.x. `core` and `react` work today; the docs site and playground live in `apps/web`. The visual builder and hosted forms are planned (see [ROADMAP.md](./ROADMAP.md)).
+Early, versioned 0.x. `core`, `react`, and the visual `builder` all work today, and a first slice of hosting is live: publish a form, get a shareable `/f/[slug]` link, anonymous respondents can fill it out. Creator accounts, verified-email/phone respondents, and a response dashboard are still planned (see [ROADMAP.md](./ROADMAP.md)).
 
 ## Development
 

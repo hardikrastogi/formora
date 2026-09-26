@@ -20,12 +20,33 @@
 
 .fb-topbar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 0.35rem;
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--fb-border);
   background: var(--fb-panel-bg);
+}
+
+.fb-topbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.fb-publish-error {
+  margin: 0;
+  color: var(--fb-danger);
+  font-size: 0.8rem;
+}
+
+.fb-publish-url {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--fb-muted);
+}
+.fb-publish-url a {
+  color: var(--fb-primary);
 }
 
 .fb-form-name {
