@@ -53,15 +53,16 @@ export function ContactForm() {
   );
 }`;
 
-const SERVER = `import { FormDefinitionSchema, validateSubmission } from "@hardikrastogi/core";
+const SERVER = `import { FormDefinitionSchema } from "@hardikrastogi/core";
+import { collectServerErrors } from "@hardikrastogi/react/server";
 
 // Load the definition you stored for this form, then check the answers again on the server.
 const definition = FormDefinitionSchema.parse(storedDefinition);
-const result = validateSubmission(definition, body.answers);
+const errors = collectServerErrors(definition, body.answers);
 
-if (!result.success) {
-  // result.errors is { [fieldId]: string[] }
-  return Response.json({ errors: result.errors }, { status: 422 });
+if (Object.keys(errors).length > 0) {
+  // errors is { [fieldId]: string[] }
+  return Response.json({ errors }, { status: 422 });
 }`;
 
 const ANSWERS = `{
@@ -94,10 +95,17 @@ export default function QuickstartPage() {
 
       <h2>3. Validate again on your server</h2>
       <p>
-        Never trust the browser. The same rules run anywhere JavaScript runs, because they live in{" "}
-        <code>@hardikrastogi/core</code>, not in the UI.
+        Never trust the browser: anyone can skip your form and send a request straight to your server.{" "}
+        <code>collectServerErrors</code> re-runs the same checks the form runs: the required, length, range and
+        pattern rules from <code>@hardikrastogi/core</code>, plus the email and URL format checks.
       </p>
       <CodeBlock title="server" code={SERVER} />
+      <p className="callout">
+        Import it from <code>@hardikrastogi/react/server</code>, not from the main package. The main entry is a
+        client bundle (it has to be, to render the form), and frameworks like Next.js refuse to load anything from it
+        in server code. The <code>/server</code> entry has no React in it and is safe anywhere. Calling{" "}
+        <code>validateSubmission</code> from core alone works too, but it does not check email or URL formats.
+      </p>
 
       <h2>Next</h2>
       <ul>

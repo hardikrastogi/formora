@@ -148,3 +148,10 @@ Each entry: what was done, what it enables, anything worth remembering about how
 **Tests:** 7 new Vitest tests for `collectServerErrors`, 9 new/updated builder component tests (publish pending/success/error states, Share via Web Share vs. clipboard fallback, the origin-throws regression), and 9 new Playwright end-to-end tests running against a real MongoDB instance — publish, OG tags, required-field rejection, malformed-email rejection, idempotent retries, distinct-key separate submissions, unpublish→410, unknown-slug→404, and republish-with-a-new-required-field. Every hosted-forms e2e test uses its own randomly generated slug so parallel test workers sharing one database never collide. 60 e2e tests total, up from 51.
 
 **Not built yet:** creator accounts (so anyone can currently publish/republish any slug — a real gap, closed in 5b), `verified_email`/`verified_phone` access modes (5c/5e), the response dashboard and CSV export (5d), and builder UI for the close-date/max-responses/one-response-per-respondent settings that already exist on the `Form` schema.
+
+### Phase 5a follow-up — Unpublish button and docs
+
+- **`Builder` gained `onUnpublish` and `initialPublished`** (both host-supplied, so the package still has no HTTP code). The top bar shows Unpublish next to Republish, a separate "Unpublishing…" busy state, and a note once unpublished. Publish state is not remembered by the builder itself; the demo page keeps the `PublishResult` in localStorage and passes it back, so Unpublish survives a reload.
+- **Docs pages updated**: quickstart now uses `collectServerErrors` from `@hardikrastogi/react/server` (with the reason it is a separate entry), builder docs have a "Publishing and sharing" section, API reference lists the `/server` and builder exports.
+- **Tests**: 7 new builder tests (42 total) and 1 new e2e test (unpublish, reload, republish). 61 e2e total.
+- **Version**: `@hardikrastogi/builder` bumped to 0.3.0 (to be published by the owner).

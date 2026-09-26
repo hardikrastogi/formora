@@ -1,6 +1,6 @@
 {
   "name": "@hardikrastogi/builder",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Drag-and-drop authoring UI for Formora form definitions.",
   "license": "MIT",
   "type": "module",

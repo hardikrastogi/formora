@@ -187,4 +187,48 @@ test.describe.serial("Phase 5a: builder UI publishes and shares a real link", ()
     expect(res?.ok()).toBe(true);
     await expect(publicPage.getByRole("heading", { name: "Builder UI Publish Test" })).toBeVisible();
   });
+
+  test("Unpublish really stops the link, survives a page reload, and Publish brings it back", async ({ page }) => {
+    await page.goto("/builder");
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.waitForSelector(".fb-root");
+
+    await page.getByLabel("Form name").fill("Unpublish Flow Test");
+    await page.getByRole("button", { name: "Add Text field" }).click();
+    await page.getByRole("button", { name: "Publish" }).click();
+    await expect(page.getByText(/^Live at/)).toBeVisible({ timeout: 10000 });
+    const href = (await page.locator(".fb-publish-url a").getAttribute("href"))!;
+    const slug = href.replace("/f/", "");
+
+    // The published state must survive a reload, or Unpublish would vanish the moment you refresh.
+    await page.reload();
+    await page.waitForSelector(".fb-root");
+    await expect(page.getByText(/^Live at/)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Unpublish" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Unpublish" }).click();
+    await expect(page.getByText(/no longer accepts responses/)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("button", { name: "Unpublish" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Share" })).toBeDisabled();
+
+    // ...and it is genuinely off for the outside world, not just hidden in the builder.
+    const closedPage = await page.context().newPage();
+    expect((await closedPage.goto(href))?.status()).toBe(404);
+    const submit = await page.request.post(`/api/forms/${slug}/submit`, {
+      data: { answers: {}, idempotencyKey: "after-ui-unpublish" },
+    });
+    expect(submit.status()).toBe(410);
+
+    // Unpublished state also survives a reload (no stale "Live at" link and no Unpublish button).
+    await page.reload();
+    await page.waitForSelector(".fb-root");
+    await expect(page.getByText(/^Live at/)).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Unpublish" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Publish" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Publish" }).click();
+    await expect(page.getByText(/^Live at/)).toBeVisible({ timeout: 10000 });
+    expect((await closedPage.goto(href))?.status()).toBe(200);
+  });
 });

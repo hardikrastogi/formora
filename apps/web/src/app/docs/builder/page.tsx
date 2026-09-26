@@ -12,6 +12,32 @@ const initial = createBlankDefinition("form_1", "My form");
 
 <Builder initialDefinition={initial} />`;
 
+const PUBLISH = `import { Builder, type PublishResult } from "@hardikrastogi/builder";
+
+// Your code does the real work. The builder only calls these and shows the outcome.
+async function publish(definition): Promise<PublishResult> {
+  const res = await fetch("/api/forms/publish", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ definition }),
+  });
+  if (!res.ok) throw new Error("Could not publish this form.");
+  const { url, slug } = await res.json();
+  return { url, slug };
+}
+
+async function unpublish(published: PublishResult) {
+  const res = await fetch("/api/forms/" + published.slug + "/unpublish", { method: "POST" });
+  if (!res.ok) throw new Error("Could not unpublish this form.");
+}
+
+<Builder
+  initialDefinition={initial}
+  onPublish={publish}
+  onUnpublish={unpublish}
+  initialPublished={rememberedFromLastVisit}   // optional, see below
+/>`;
+
 export default function BuilderDocsPage() {
   return (
     <>
@@ -69,6 +95,70 @@ export default function BuilderDocsPage() {
         <Link href="/docs/quickstart">FormRenderer</Link> your visitors would see, with live validation.
       </p>
 
+      <h2>Publishing and sharing</h2>
+      <p>
+        The builder never talks to a server itself, so the package stays free of any HTTP or framework code.
+        Publishing is a set of callbacks your app supplies. Pass them and the top bar gains a Publish button, a live
+        link, Share, and Unpublish. Leave them out and none of those appear.
+      </p>
+      <CodeBlock title="publishing.tsx" code={PUBLISH} />
+      <table>
+        <thead>
+          <tr>
+            <th>Prop</th>
+            <th>What it does</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <code>onPublish(definition)</code>
+            </td>
+            <td>
+              Called when the user clicks Publish. Resolve with <code>{"{ url, slug? }"}</code> (a{" "}
+              <code>PublishResult</code>); throw to show an error and leave the form untouched.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <code>onUnpublish(published)</code>
+            </td>
+            <td>
+              Called when the user clicks Unpublish, with the last <code>PublishResult</code> so you know which form
+              to switch off. Optional; without it there is no Unpublish button.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <code>initialPublished</code>
+            </td>
+            <td>
+              If the form is already live when the builder opens, pass its <code>PublishResult</code> so the link,
+              Share and Unpublish are there immediately.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <ul>
+        <li>
+          After publishing, the top bar shows &quot;Live at /f/…&quot;, and Publish becomes Republish. Republishing
+          creates a fresh version; it never alters the one people already answered.
+        </li>
+        <li>
+          Share opens the device&apos;s share sheet where the browser supports it, and otherwise copies the link.
+        </li>
+        <li>
+          Unpublish is reversible: the link stops accepting responses, and Publish brings it back. Existing responses
+          are kept.
+        </li>
+        <li>Publish and Unpublish both disable while running, so nothing can be sent twice by a double click.</li>
+      </ul>
+      <p className="callout">
+        The builder does not remember by itself that a form is published, since it does not own storage. Keep the{" "}
+        <code>PublishResult</code> somewhere (the <Link href="/builder">demo</Link> uses local storage) and pass it back
+        as <code>initialPublished</code> next time, or Unpublish will only be available in the session that published.
+      </p>
+
       <h2>Autosave</h2>
       <p className="callout">
         The hosted <Link href="/builder">builder demo</Link> autosaves to your browser&apos;s local storage only, as a
@@ -87,7 +177,10 @@ export default function BuilderDocsPage() {
           Fields are one per row for now; multi-column layouts are set through a field&apos;s Style tab (a numeric
           width from 1 to 12), not by dragging fields side by side.
         </li>
-        <li>Sharing, publishing, and multi-device sync arrive with hosted forms.</li>
+        <li>
+          Creator accounts are not built yet, so nothing stops someone who knows a form&apos;s link name from
+          republishing over it. Ownership checks and syncing your work across devices are planned next.
+        </li>
       </ul>
     </>
   );
