@@ -144,14 +144,15 @@ The smallest possible slice that's a genuinely working hosted form.
 
 - [x] Auth.js (NextAuth v5) email magic link with the MongoDB adapter; no passwords. Links are single-use and expire in 15 minutes
 - [x] Email delivery is pluggable via `EMAIL_TRANSPORT`: `console` (link printed in the terminal, local only) or `resend` (real email through Resend's HTTP API)
-- [ ] Real email needs a Resend account plus a domain with SPF/DKIM set up (owner task; production sign-in does not work until this is done)
+- [x] Real email works in production through Resend's test sender (only delivers to the Resend account owner's address)
+- [ ] A verified domain with SPF/DKIM so anyone can receive sign-in links (owner task, optional for a demo)
 - [ ] "Continue with Google": deferred, magic link only for now
 - [x] Forms are owned by the account that first publishes them; only the owner can republish or unpublish (403/404 for anyone else). Ownerless forms from before accounts are claimed by the first signed-in publisher
 - [x] Drafts: the builder autosaves to the account (`PUT /api/drafts/[id]`, debounced) instead of localStorage; `/dashboard` lists my forms; `/builder/[id]` reopens one
 - [x] Builder package: new `onSave` prop (0.4.0); without it the builder still falls back to localStorage
 - [ ] Viewing responses is owner-only, but the response dashboard itself is Phase 5d
 
-**Milestone:** you have to sign in to build/manage forms; the builder's autosave hits a real backend instead of localStorage.
+**Milestone met:** you have to sign in to build/manage forms; the builder's autosave hits a real backend instead of localStorage. Verified live on Vercel. Deep reference: `PHASE_5B_CREATOR_ACCOUNTS.md`.
 
 ### Phase 5c — Verified-email respondents
 
