@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { openNewBuilder } from "./auth-helpers";
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/builder");
-  await page.waitForSelector(".fb-root");
+  await openNewBuilder(page);
 });
 
 test("adding fields from the palette places them on the canvas in order", async ({ page }) => {
@@ -74,9 +74,11 @@ test("a low-contrast primary colour shows an inline WCAG warning", async ({ page
   await expect(page.getByText(/below the WCAG AA minimum/)).toBeVisible();
 });
 
-test("work survives a reload via the autosave", async ({ page }) => {
+test("work survives a reload because autosave saves to the server", async ({ page }) => {
+  const saved = page.waitForResponse((r) => r.url().includes("/api/drafts/") && r.request().method() === "PUT");
   await page.getByLabel("Form name").fill("Reloaded form");
   await page.getByRole("button", { name: "Add Text field" }).click();
+  expect((await saved).ok()).toBe(true);
   await expect(page.getByText("Saved")).toBeVisible();
 
   await page.reload();

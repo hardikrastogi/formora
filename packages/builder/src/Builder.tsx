@@ -23,6 +23,12 @@ export interface BuilderProps {
   /** Where to autosave to localStorage. Defaults to the form's id. */
   storageKey?: string;
   /**
+   * Host-supplied autosave. When given, edits are sent here (debounced)
+   * instead of to localStorage, and the save indicator reflects its result.
+   * Throw to show "Could not save".
+   */
+  onSave?: (definition: FormDefinition) => Promise<void>;
+  /**
    * Called when the user clicks Publish. The host app does the actual save
    * (an API call, typically) and resolves with the public URL. Omit this
    * prop to hide the Publish button entirely — used in the demo/preview
@@ -45,12 +51,13 @@ export interface BuilderProps {
 
 interface BuilderInnerProps {
   storageKey: string;
+  onSave?: BuilderProps["onSave"];
   onPublish?: BuilderProps["onPublish"];
   onUnpublish?: BuilderProps["onUnpublish"];
   initialPublished?: PublishResult | null;
 }
 
-function BuilderInner({ storageKey, onPublish, onUnpublish, initialPublished }: BuilderInnerProps) {
+function BuilderInner({ storageKey, onSave, onPublish, onUnpublish, initialPublished }: BuilderInnerProps) {
   const definition = useBuilder((s) => s.definition);
   const mode = useBuilder((s) => s.mode);
   const isDirty = useBuilder((s) => s.isDirty);
@@ -58,7 +65,7 @@ function BuilderInner({ storageKey, onPublish, onUnpublish, initialPublished }: 
   const addField = useBuilder((s) => s.addField);
   const reorderFields = useBuilder((s) => s.reorderFields);
 
-  const saveState = useAutosave(storageKey, definition, isDirty, markSaved);
+  const saveState = useAutosave(storageKey, definition, isDirty, markSaved, onSave);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   const [publishState, setPublishState] = useState<PublishState>("idle");
@@ -184,11 +191,12 @@ function BuilderInner({ storageKey, onPublish, onUnpublish, initialPublished }: 
   );
 }
 
-export function Builder({ initialDefinition, storageKey, onPublish, onUnpublish, initialPublished }: BuilderProps) {
+export function Builder({ initialDefinition, storageKey, onSave, onPublish, onUnpublish, initialPublished }: BuilderProps) {
   return (
     <BuilderProvider initialDefinition={initialDefinition}>
       <BuilderInner
         storageKey={storageKey ?? `formora-builder:${initialDefinition.id}`}
+        onSave={onSave}
         onPublish={onPublish}
         onUnpublish={onUnpublish}
         initialPublished={initialPublished}

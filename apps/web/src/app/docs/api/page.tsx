@@ -139,7 +139,7 @@ export default function ApiPage() {
       <ul>
         <li>
           <code>Builder</code>: the editor. Props: <code>initialDefinition</code> (required), <code>storageKey</code>,{" "}
-          <code>onPublish</code>, <code>onUnpublish</code>, <code>initialPublished</code>. See the{" "}
+          <code>onSave</code>, <code>onPublish</code>, <code>onUnpublish</code>, <code>initialPublished</code>. See the{" "}
           <a href="/docs/builder">builder page</a> for what each does.
         </li>
         <li>

@@ -3,6 +3,7 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Builder } from "../Builder";
 import { createBlankDefinition } from "../blank";
+import type { FormDefinition } from "@hardikrastogi/core";
 
 beforeEach(() => {
   window.localStorage.clear();
@@ -170,6 +171,32 @@ describe("Builder", () => {
       { timeout: 2000 },
     );
     expect(await screen.findByText("Saved")).toBeInTheDocument();
+  });
+
+  it("with onSave, edits go to the host instead of localStorage, and the indicator reflects the result", async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn(async (_definition: FormDefinition) => {});
+    render(<Builder initialDefinition={createBlankDefinition("host_saved", "My form")} onSave={onSave} />);
+
+    await user.click(screen.getByRole("button", { name: "Add Text field" }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1), { timeout: 2000 });
+    expect(onSave.mock.calls[0][0].fields).toHaveLength(1);
+    expect(await screen.findByText("Saved")).toBeInTheDocument();
+    expect(window.localStorage.getItem("formora-builder:host_saved")).toBeNull();
+  });
+
+  it("shows 'Could not save' when onSave fails, and saves again on the next edit", async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn<(d: FormDefinition) => Promise<void>>().mockRejectedValueOnce(new Error("offline")).mockResolvedValue(undefined);
+    render(<Builder initialDefinition={createBlankDefinition("host_fail", "My form")} onSave={onSave} />);
+
+    await user.click(screen.getByRole("button", { name: "Add Text field" }));
+    expect(await screen.findByText("Could not save", undefined, { timeout: 2000 })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Add Email field" }));
+    expect(await screen.findByText("Saved", undefined, { timeout: 2000 })).toBeInTheDocument();
+    expect(onSave).toHaveBeenCalledTimes(2);
+    expect(onSave.mock.calls[1][0].fields).toHaveLength(2);
   });
 
   it("has no Publish button when onPublish is not provided, and Share stays disabled", () => {

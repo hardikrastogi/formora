@@ -132,7 +132,22 @@ blocks importing anything at all from a `"use client"` module in server code, ev
 
 ## Auth Flow
 
-*(To be filled in once Phase 5's auth lands — Auth.js/NextAuth v5 + Google OAuth + MongoDB adapter, per project decision.)*
+Creators sign in with an emailed magic link (Auth.js v5, MongoDB adapter, database sessions). There are no passwords.
+
+```
+/signin  --(email)-->  server action requestLink
+   -> Auth.js creates a one-time token in MongoDB and calls sendMagicLink(to, url)
+        EMAIL_TRANSPORT=console : print the link + store it in dev_email_outbox (local/e2e only)
+        EMAIL_TRANSPORT=resend  : POST https://api.resend.com/emails
+   -> user opens the link -> /api/auth/callback/email consumes the token (single use, 15 min)
+   -> session cookie (authjs.session-token) -> redirect to the safe `next` path
+```
+
+- **Where identity is checked:** route handlers and server pages call `getUserId()` (`lib/auth/session.ts`). There is no middleware, so pages stay simple and the docs remain static. The header reads the session in the browser (`AuthNav`) for the same reason.
+- **Ownership:** `Form.ownerAccountId` is set by the first signed-in publisher. Publish returns 403 for a different owner; unpublish matches on owner and answers 404 otherwise, so slugs cannot be probed. `Draft` documents are keyed by (owner, form id) and only ever returned to their owner.
+- **Drafts vs published:** the builder autosaves the working copy to `Draft` (lenient, since a half-edited form must still save). Publishing validates the full schema and snapshots a `FormVersion`, as in 5a.
+- **Open redirects:** `safeRedirectPath` only accepts same-site paths for the post-sign-in `next` parameter.
+- **Respondents are not accounts.** Verified-email respondents (5c) use a separate token system.
 
 ---
 

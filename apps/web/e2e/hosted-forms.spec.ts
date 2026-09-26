@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext } from "@playwright/test";
+import { openNewBuilder, signIn, uniqueEmail } from "./auth-helpers";
 
 const STAMP = "2026-01-01T00:00:00.000Z";
 
@@ -38,6 +39,11 @@ async function publish(request: APIRequestContext, slug: string) {
 // uses its own randomly-generated slug — never the builder's shared demo
 // slug — to stay isolated from tests running in parallel.
 test.describe("Phase 5a: publish, submit, and hosting API", () => {
+  // Publishing needs a signed-in creator; each test gets its own account.
+  test.beforeEach(async ({ request }) => {
+    await signIn(request, uniqueEmail("api"));
+  });
+
   test("publishing returns a working public URL, and the page has OG tags", async ({ request, page }) => {
     const slug = uniqueSlug("basic");
     const { url } = await publish(request, slug);
@@ -168,10 +174,7 @@ test.describe("Phase 5a: publish, submit, and hosting API", () => {
 
 test.describe.serial("Phase 5a: builder UI publishes and shares a real link", () => {
   test("Publish shows the live URL in the builder, and the link actually works", async ({ page }) => {
-    await page.goto("/builder");
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
-    await page.waitForSelector(".fb-root");
+    await openNewBuilder(page, "ui");
 
     await page.getByLabel("Form name").fill("Builder UI Publish Test");
     await page.getByRole("button", { name: "Add Text field" }).click();
@@ -189,10 +192,7 @@ test.describe.serial("Phase 5a: builder UI publishes and shares a real link", ()
   });
 
   test("Unpublish really stops the link, survives a page reload, and Publish brings it back", async ({ page }) => {
-    await page.goto("/builder");
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
-    await page.waitForSelector(".fb-root");
+    await openNewBuilder(page, "ui");
 
     await page.getByLabel("Form name").fill("Unpublish Flow Test");
     await page.getByRole("button", { name: "Add Text field" }).click();
