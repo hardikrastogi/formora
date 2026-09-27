@@ -35,6 +35,11 @@ const STEPS = [
   ["Collect", "Receive clean answers plus the schema version, ready to store or send."],
 ];
 
+// Placeholders only — the templates themselves are a later phase. Shown now
+// so a form-creator visitor (not just a developer integrating the library)
+// has something concrete to want on this page.
+const TEMPLATES = ["Resume", "Portfolio", "Invitation", "Event RSVP", "Job application", "Feedback"];
+
 export default function HomePage() {
   return (
     <>
@@ -58,6 +63,27 @@ export default function HomePage() {
       <section className="mx-auto max-w-2xl px-4 pb-16">
         <CodeBlock title="Install" code={"npm install @hardikrastogi/core @hardikrastogi/react"} />
         <CodeBlock title="Use" code={SNIPPET} />
+      </section>
+
+      <section className="border-y bg-muted/30 py-14">
+        <div className="mx-auto max-w-6xl px-4">
+          <h2 className="mb-2 text-center text-2xl font-bold tracking-tight">Start from a template</h2>
+          <p className="mx-auto mb-8 max-w-xl text-center text-sm text-muted-foreground">
+            Ready-made forms for common needs, coming soon. For now, sign up and build one from scratch.
+          </p>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
+            {TEMPLATES.map((t) => (
+              <div
+                key={t}
+                aria-disabled="true"
+                className="rounded-lg border border-dashed bg-background p-4 text-center text-sm text-muted-foreground"
+              >
+                {t}
+                <span className="mt-1 block text-xs">Coming soon</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section className="border-y bg-muted/30 py-14">

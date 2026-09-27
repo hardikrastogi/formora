@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { safeRedirectPath } from "@/lib/safe-redirect";
+import { GoogleButton } from "@/components/google-button";
+import { PasswordLoginForm } from "./password-login-form";
 import { SignInForm } from "./sign-in-form";
 
-export const metadata: Metadata = { title: "Sign in" };
+export const metadata: Metadata = { title: "Log in" };
+
+const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 
 export default async function SignInPage({
   searchParams,
@@ -17,12 +22,42 @@ export default async function SignInPage({
 
   return (
     <div className="mx-auto max-w-md px-4 py-16">
-      <h1 className="text-2xl font-bold tracking-tight">Sign in to Formora</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Enter your email and we&apos;ll send you a link that signs you in. There is no password to remember, and new
-        addresses get an account automatically.
+      <h1 className="text-2xl font-bold tracking-tight">Log in to Formora</h1>
+
+      {googleEnabled ? (
+        <div className="mt-6">
+          <GoogleButton next={next} label="Continue with Google" />
+        </div>
+      ) : null}
+
+      <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
+        <div className="h-px flex-1 bg-border" />
+        or
+        <div className="h-px flex-1 bg-border" />
+      </div>
+
+      <PasswordLoginForm next={next} />
+      <p className="mt-3 text-sm">
+        <Link href="/forgot-password" className="text-muted-foreground underline">
+          Forgot password?
+        </Link>
       </p>
+
+      <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
+        <div className="h-px flex-1 bg-border" />
+        or
+        <div className="h-px flex-1 bg-border" />
+      </div>
+
+      <p className="text-sm text-muted-foreground">No password to remember: get a one-time link by email instead.</p>
       <SignInForm next={next} />
+
+      <p className="mt-6 text-sm text-muted-foreground">
+        Don&apos;t have an account?{" "}
+        <Link href={`/signup?next=${encodeURIComponent(next)}`} className="underline">
+          Sign up
+        </Link>
+      </p>
     </div>
   );
 }

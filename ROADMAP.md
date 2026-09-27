@@ -146,13 +146,27 @@ The smallest possible slice that's a genuinely working hosted form.
 - [x] Email delivery is pluggable via `EMAIL_TRANSPORT`: `console` (link printed in the terminal, local only) or `resend` (real email through Resend's HTTP API)
 - [x] Real email works in production through Resend's test sender (only delivers to the Resend account owner's address)
 - [ ] A verified domain with SPF/DKIM so anyone can receive sign-in links (owner task, optional for a demo)
-- [ ] "Continue with Google": deferred, magic link only for now
+- [x] "Continue with Google": built in 5b-2, below
 - [x] Forms are owned by the account that first publishes them; only the owner can republish or unpublish (403/404 for anyone else). Ownerless forms from before accounts are claimed by the first signed-in publisher
 - [x] Drafts: the builder autosaves to the account (`PUT /api/drafts/[id]`, debounced) instead of localStorage; `/dashboard` lists my forms; `/builder/[id]` reopens one
 - [x] Builder package: new `onSave` prop (0.4.0); without it the builder still falls back to localStorage
 - [ ] Viewing responses is owner-only, but the response dashboard itself is Phase 5d
 
 **Milestone met:** you have to sign in to build/manage forms; the builder's autosave hits a real backend instead of localStorage. Verified live on Vercel. Deep reference: `PHASE_5B_CREATOR_ACCOUNTS.md`.
+
+### Phase 5b-2 — Password and Google sign-in for creators
+
+Added after 5b shipped: creators can now sign up and log in with email+password or Google, alongside the existing magic link — all three work side by side on the same account.
+
+- [x] Email+password signup, gated behind a single-use, 15-minute email verification link (same pattern as 5c's respondent verification: hashed tokens, rate-limited)
+- [x] Email+password login via a NextAuth Credentials provider; switched the whole app to JWT sessions, since Auth.js requires this once any Credentials provider is registered
+- [x] "Continue with Google" (NextAuth's Google provider), auto-hidden when `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` aren't set
+- [x] Forgot-password flow: single-use reset link, old password stops working immediately once a new one is set
+- [x] A magic-link-only account can add a password later (via signup) without creating a second account; the same email always maps to one account regardless of method
+- [x] Nav cleanup: dropped the redundant "Builder" link and moved developer-only "Docs"/"Playground" out of the header (pages still live, just not top-level); signed-out nav now shows "Log in" and "Sign up"
+- [x] Homepage: added a placeholder "Start from a template" section (Resume, Portfolio, Invitation, etc. — the templates themselves are a later phase)
+
+**Milestone met:** a creator can sign up and log in with a password or Google, not just a magic link, and none of the 5b/5c flows regressed from the session-strategy change. 19 new e2e tests, all passing.
 
 ### Phase 5c — Verified-email respondents
 

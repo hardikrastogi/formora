@@ -34,8 +34,13 @@ export function AuthNav() {
       </Link>
     </>
   ) : (
-    <Link href="/signin" className="text-muted-foreground hover:text-foreground">
-      Sign in
-    </Link>
+    <>
+      <Link href="/signin" className="text-muted-foreground hover:text-foreground">
+        Log in
+      </Link>
+      <Link href="/signup" className="text-muted-foreground hover:text-foreground">
+        Sign up
+      </Link>
+    </>
   );
 }

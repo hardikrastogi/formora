@@ -8,7 +8,7 @@ export function SignInForm({ next }: { next: string }) {
   const [state, action, pending] = useActionState<SignInState, FormData>(requestLink, { error: null });
 
   return (
-    <form action={action} className="mt-6 space-y-3">
+    <form action={action} aria-label="Get a one-time link" className="mt-3 space-y-3">
       <input type="hidden" name="next" value={next} />
       <label htmlFor="email" className="block text-sm font-medium">
         Email address

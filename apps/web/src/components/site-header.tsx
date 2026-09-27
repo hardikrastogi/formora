@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { AuthNav } from "./auth-nav";
 
-const links = [
-  { href: "/docs", label: "Docs" },
-  { href: "/playground", label: "Playground" },
-  { href: "/dashboard", label: "Builder" },
-  { href: "https://www.npmjs.com/package/@hardikrastogi/react", label: "npm", external: true },
-];
+// Docs and Playground are developer-facing pages for the npm packages — a
+// different audience from form creators — so they stay live at their URLs
+// but are left out of the main nav. "Builder" was dropped too: it only ever
+// redirected to /dashboard, which AuthNav's "My forms" link already covers.
+const links = [{ href: "https://www.npmjs.com/package/@hardikrastogi/react", label: "npm", external: true }];
 
 export function SiteHeader() {
   return (
