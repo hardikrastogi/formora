@@ -17,7 +17,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
   }
 
-  const { definition, slug: requestedSlug } = (body ?? {}) as { definition?: unknown; slug?: unknown };
+  const {
+    definition,
+    slug: requestedSlug,
+    accessMode,
+  } = (body ?? {}) as { definition?: unknown; slug?: unknown; accessMode?: unknown };
+  if (accessMode !== undefined && accessMode !== "anyone" && accessMode !== "verified_email") {
+    return NextResponse.json({ error: "accessMode must be 'anyone' or 'verified_email'." }, { status: 422 });
+  }
   const parsed = FormDefinitionSchema.safeParse(definition);
   if (!parsed.success) {
     return NextResponse.json(
@@ -48,6 +55,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "That link name is already taken." }, { status: 403 });
   }
   form.ownerAccountId = userId;
+  // Left as-is when the caller doesn't say, so republishing never silently loosens who may respond.
+  if (accessMode) form.accessMode = accessMode;
 
   const version = await FormVersionModel.create({
     formId: form._id,
@@ -59,5 +68,8 @@ export async function POST(request: Request) {
   form.currentVersionId = version._id;
   await form.save();
 
-  return NextResponse.json({ slug: form.slug, url: `/f/${form.slug}` }, { status: 200 });
+  return NextResponse.json(
+    { slug: form.slug, url: `/f/${form.slug}`, accessMode: form.accessMode },
+    { status: 200 },
+  );
 }

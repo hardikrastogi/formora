@@ -23,12 +23,17 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
   await connectToDatabase();
   const draft = await DraftModel.findOne({ ownerAccountId: userId, definitionId: id }).lean<{ definition: unknown } | null>();
-  const form = await FormModel.findOne({ slug: slugify(id), ownerAccountId: userId }).lean<{ slug: string; published: boolean } | null>();
+  const form = await FormModel.findOne({ slug: slugify(id), ownerAccountId: userId }).lean<{
+    slug: string;
+    published: boolean;
+    accessMode?: "anyone" | "verified_email";
+  } | null>();
 
   return (
     <BuilderPage
       formId={id}
       initialDefinition={(draft?.definition as FormDefinition | undefined) ?? null}
+      initialAccessMode={form?.accessMode ?? "anyone"}
       initialPublished={form?.published ? { url: `/f/${form.slug}`, slug: form.slug } : null}
     />
   );

@@ -18,6 +18,8 @@ export default defineConfig({
     url: `http://localhost:${PORT}`,
     // Auth.js builds sign-in links on "localhost" under `next start`, so the tests browse
     // that same host; a different one would not receive the session cookie.
+    // Verification emails link to APP_ORIGIN (never to the request's Host header).
+    env: { APP_ORIGIN: `http://localhost:${PORT}` },
     reuseExistingServer: !process.env.CI,
     timeout: 240_000,
   },
