@@ -21,6 +21,7 @@ export default async function DashboardPage() {
     slug: { $in: drafts.map((d) => slugify(d.definitionId)) },
   }).lean();
   const liveSlugs = new Set(forms.filter((f) => f.published).map((f) => f.slug));
+  const verifiedSlugs = new Set(forms.filter((f) => f.accessMode === "verified_email").map((f) => f.slug));
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -51,7 +52,7 @@ export default async function DashboardPage() {
                 </div>
                 {live ? (
                   <a href={`/f/${slug}`} className="text-sm text-muted-foreground hover:text-foreground">
-                    Live: /f/{slug}
+                    Live{verifiedSlugs.has(slug) ? " (verified email)" : ""}: /f/{slug}
                   </a>
                 ) : (
                   <span className="text-sm text-muted-foreground">Not published</span>

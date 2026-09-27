@@ -10,6 +10,8 @@ const FormSchema = new Schema(
     slug: { type: String, required: true, unique: true, index: true },
     // Nullable until Phase 5b adds creator accounts.
     ownerAccountId: { type: String, default: null },
+    // Who may fill the form out: anyone with the link, or only people who verify an email first.
+    accessMode: { type: String, enum: ["anyone", "verified_email"], default: "anyone" },
     published: { type: Boolean, default: false },
     currentVersionId: { type: Schema.Types.ObjectId, ref: "FormVersion", default: null },
     allowResponseEditing: { type: Boolean, default: false },

@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { FormDefinitionSchema } from "@hardikrastogi/core";
 import { collectServerErrors } from "@hardikrastogi/react/server";
@@ -5,6 +6,7 @@ import { connectToDatabase } from "@/lib/db/connect";
 import { FormModel } from "@/lib/db/models/Form";
 import { FormVersionModel } from "@/lib/db/models/FormVersion";
 import { SubmissionModel } from "@/lib/db/models/Submission";
+import { respondentCookieName, verifyRespondentToken } from "@/lib/respondent-session";
 
 const DUPLICATE_KEY_ERROR_CODE = 11000;
 
@@ -37,6 +39,21 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
   }
   if (form.closesAt && new Date() > form.closesAt) {
     return NextResponse.json({ error: "This form is closed." }, { status: 410 });
+  }
+
+  // A form that requires a verified email must be answered by someone who
+  // completed verification for THIS form. Checked on the server, from a signed
+  // cookie: the browser hiding the form is not a security measure.
+  let respondentIdentityId: string | null = null;
+  if (form.accessMode === "verified_email") {
+    const cookie = (await cookies()).get(respondentCookieName(String(form._id)))?.value;
+    respondentIdentityId = verifyRespondentToken(cookie, String(form._id));
+    if (!respondentIdentityId) {
+      return NextResponse.json(
+        { error: "Verify your email to submit this form.", code: "verification_required" },
+        { status: 401 },
+      );
+    }
   }
 
   const version = await FormVersionModel.findById(form.currentVersionId);
@@ -72,6 +89,7 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
       schemaVersion: parsedDefinition.data.schemaVersion,
       answers,
       idempotencyKey,
+      respondentIdentityId,
     });
     return NextResponse.json({ submissionId: String(submission._id) }, { status: 201 });
   } catch (error) {

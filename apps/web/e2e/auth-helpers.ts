@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
-import { MongoClient } from "mongodb";
+import { MongoClient, type Db } from "mongodb";
 
 // The tests talk to the same database the dev server uses (EMAIL_TRANSPORT=console
 // stores every sign-in email in `dev_email_outbox`), so read the same URI.
@@ -61,4 +61,14 @@ export async function openNewBuilder(page: Page, name = "builder"): Promise<void
   await signIn(page.request, uniqueEmail(name));
   await page.goto("/builder/new");
   await page.waitForSelector(".fb-root");
+}
+
+/** Runs a callback against the same database the server uses (for setting up or inspecting state). */
+export async function withDb<T>(fn: (db: Db) => Promise<T>): Promise<T> {
+  const client = await new MongoClient(mongoUri()).connect();
+  try {
+    return await fn(client.db());
+  } finally {
+    await client.close();
+  }
 }
