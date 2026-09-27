@@ -156,13 +156,13 @@ The smallest possible slice that's a genuinely working hosted form.
 
 ### Phase 5c — Verified-email respondents
 
-- [ ] Add `verified_email` as a second access mode (`anyone` stays the default)
-- [ ] Respondent enters an email → receives a magic link → clicks "Continue to form" → returns to the *same* form
-- [ ] Short-lived, single-use verification tokens: expiry, resend cooldown, max attempts, IP/identity rate limits
-- [ ] A stable `RespondentIdentity` reference stored per verified submission — without ever creating a Formora account for the respondent
-- [ ] Reuses the same email-delivery provider from 5b
+- [x] Add `verified_email` as a second access mode (`anyone` stays the default)
+- [x] Respondent enters an email → receives a magic link → clicks "Continue to form" → returns to the *same* form
+- [x] Short-lived, single-use verification tokens: expiry, resend cooldown, per-address and per-IP rate limits
+- [x] A stable `RespondentIdentity` reference stored per verified submission — without ever creating a Formora account for the respondent
+- [x] Reuses the same email-delivery provider from 5b
 
-**Milestone:** a creator can require email verification before someone can fill out a sensitive form.
+**Milestone met:** a creator can require email verification before someone can fill out a sensitive form. 14 new e2e tests, all passing. Deep reference: `PHASE_5C_VERIFIED_EMAIL.md`.
 
 ### Phase 5d — Response dashboard, account linking, and editing
 
