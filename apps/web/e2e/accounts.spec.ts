@@ -26,7 +26,7 @@ test.describe("Phase 5b: creator accounts", () => {
   test("the builder and dashboard send signed-out visitors to sign in", async ({ page }) => {
     await page.goto("/builder/new");
     await expect(page).toHaveURL(/\/signin/);
-    await expect(page.getByRole("heading", { name: "Sign in to Formora" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Log in to Formora" })).toBeVisible();
 
     await page.goto("/dashboard");
     await expect(page).toHaveURL(/\/signin/);
@@ -38,8 +38,9 @@ test.describe("Phase 5b: creator accounts", () => {
   }) => {
     const email = uniqueEmail("magic");
     await page.goto("/signin?next=/dashboard");
-    await page.getByLabel("Email address").fill(email);
-    await page.getByRole("button", { name: "Email me a sign-in link" }).click();
+    const linkForm = page.getByRole("form", { name: "Get a one-time link" });
+    await linkForm.getByLabel("Email address").fill(email);
+    await linkForm.getByRole("button", { name: "Email me a sign-in link" }).click();
     await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
 
     const link = await latestLink(email);
@@ -59,12 +60,13 @@ test.describe("Phase 5b: creator accounts", () => {
 
   test("an invalid email is rejected before any link is sent", async ({ page }) => {
     await page.goto("/signin");
-    // The header's Sign in link only appears once the page has hydrated, so the form is live by then.
-    await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Sign in" })).toBeVisible();
+    // The header's Log in link only appears once the page has hydrated, so the form is live by then.
+    await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Log in" })).toBeVisible();
+    const linkForm = page.getByRole("form", { name: "Get a one-time link" });
     // Skip the browser's own email check so the server-side check is what gets exercised.
-    await page.locator("form").evaluate((form: HTMLFormElement) => (form.noValidate = true));
-    await page.getByLabel("Email address").fill("not-an-email");
-    await page.getByRole("button", { name: "Email me a sign-in link" }).click();
+    await linkForm.evaluate((form: HTMLFormElement) => (form.noValidate = true));
+    await linkForm.getByLabel("Email address").fill("not-an-email");
+    await linkForm.getByRole("button", { name: "Email me a sign-in link" }).click();
     await expect(page.getByText("Enter a valid email address.")).toBeVisible();
   });
 

@@ -25,3 +25,22 @@ export async function requestLink(_previous: SignInState, formData: FormData): P
   }
   return { error: null };
 }
+
+export async function loginWithPassword(_previous: SignInState, formData: FormData): Promise<SignInState> {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "");
+  const next = safeRedirectPath(formData.get("next"));
+  if (!email || !password) {
+    return { error: "Enter your email and password." };
+  }
+  try {
+    // On success signIn redirects (by throwing), so nothing after it runs.
+    await signIn("credentials", { email, password, redirectTo: next });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return { error: "Incorrect email or password." };
+    }
+    throw error;
+  }
+  return { error: null };
+}

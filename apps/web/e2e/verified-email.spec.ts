@@ -105,7 +105,7 @@ test.describe("Phase 5c: verified-email respondents", () => {
     const email = uniqueEmail("respondent").toUpperCase();
 
     await page.goto(`/f/${slug}`);
-    await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Sign in" })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Log in" })).toBeVisible();
     await page.getByLabel("Your email address").fill(email);
     await page.getByRole("button", { name: "Email me a link" }).click();
     await expect(page.getByText("Check your email")).toBeVisible();
