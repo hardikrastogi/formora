@@ -53,7 +53,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => ({
         return { id: String(user._id), email: user.email };
       },
     }),
-    ...(googleConfigured ? [Google] : []),
+    // Auth.js v5's built-in providers auto-read AUTH_GOOGLE_ID/AUTH_GOOGLE_SECRET
+    // by default, NOT the GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET names this app
+    // documents in .env.example — passing them explicitly is what makes our
+    // chosen names actually take effect instead of silently sending "undefined".
+    ...(googleConfigured
+      ? [Google({ clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET })]
+      : []),
   ],
   pages: { signIn: "/signin", verifyRequest: "/signin/check-email" },
   callbacks: {
