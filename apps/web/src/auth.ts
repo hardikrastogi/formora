@@ -57,8 +57,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => ({
     // by default, NOT the GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET names this app
     // documents in .env.example — passing them explicitly is what makes our
     // chosen names actually take effect instead of silently sending "undefined".
+    //
+    // allowDangerousEmailAccountLinking: by default Auth.js refuses to attach
+    // a new Google sign-in to an existing account with the same email, to stop
+    // an attacker linking to someone else's account through an unverified
+    // provider. That risk doesn't apply here: every account on this app only
+    // becomes usable after its email is proven — a clicked magic link, a
+    // clicked signup-verification link, or Google's own pre-verified email —
+    // so "same email" already means "same proven person" everywhere else in
+    // this app (see upsertVerifiedPasswordUser). Without this flag, a creator
+    // who signed up with a password could never also use Google on that email.
     ...(googleConfigured
-      ? [Google({ clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET })]
+      ? [
+          Google({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            allowDangerousEmailAccountLinking: true,
+          }),
+        ]
       : []),
   ],
   pages: { signIn: "/signin", verifyRequest: "/signin/check-email" },
