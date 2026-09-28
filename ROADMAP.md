@@ -136,7 +136,7 @@ The smallest possible slice that's a genuinely working hosted form.
 - [x] OG meta tags on `/f/[slug]` for WhatsApp/email/social link previews
 - [x] Unpublishing (410 on new submissions) and a never-published/unknown slug (404) both handled distinctly
 - [x] Unpublish button in the builder (`onUnpublish` + `initialPublished`), survives reload; docs cover `onPublish`/`onUnpublish` and `@hardikrastogi/react/server`
-- [x] `Form` schema has `limitOneResponsePerRespondent`, `closesAt`, `maxResponses` fields (max-responses cap enforced in the submit route; the other two are stored but not yet enforced — no builder UI exposes them yet either)
+- [x] `Form` schema has `limitOneResponsePerRespondent`, `closesAt`, `maxResponses` fields (max-responses cap enforced in the submit route). `closesAt` is now fully wired up too — added after 5c: a "Closes" date/time picker in the builder, enforced in the submit route (410 past the date) and on the public page itself (a "This form closed" message instead of the form), shown on the dashboard, clearable by republishing with it blank. `limitOneResponsePerRespondent` and a builder UI for `maxResponses` are still just stored, not enforced or exposed
 
 **Milestone met:** build a form, publish it, share the link, have someone (anonymously) fill it out, see it land in MongoDB. Verified for real — not just built — against a running MongoDB, including idempotent retries, republishing, and unpublish/404 handling. 17 new automated tests (unit + e2e).
 

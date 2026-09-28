@@ -13,19 +13,33 @@ async function errorMessage(res: Response, fallback: string): Promise<string> {
   return typeof body.error === "string" ? body.error : fallback;
 }
 
+/** ISO string (or null) <-> the local "YYYY-MM-DDTHH:mm" value a datetime-local input needs. */
+function isoToLocalInput(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export function BuilderPage({
   formId,
   initialDefinition,
   initialPublished,
   initialAccessMode,
+  initialClosesAt,
 }: {
   formId: string;
   initialAccessMode: AccessMode;
+  initialClosesAt: string | null;
   initialDefinition: FormDefinition | null;
   initialPublished: PublishResult | null;
 }) {
   // Who may respond. Sent with Publish, so it takes effect when you publish or republish.
   const [accessMode, setAccessMode] = useState<AccessMode>(initialAccessMode);
+  // Empty string means "no close date". Kept as the datetime-local input's own
+  // string format and converted to/from ISO only at the edges (load/publish).
+  const [closesAtLocal, setClosesAtLocal] = useState(() => isoToLocalInput(initialClosesAt));
   const definition = useMemo(
     () => initialDefinition ?? createBlankDefinition(formId, "My form"),
     [initialDefinition, formId],
@@ -44,7 +58,13 @@ export function BuilderPage({
     const res = await fetch("/api/forms/publish", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ definition: next, accessMode }),
+      // The datetime-local input has no timezone, so `new Date(...)` reads it in the
+      // browser's own local time — exactly the time the creator saw and picked.
+      body: JSON.stringify({
+        definition: next,
+        accessMode,
+        closesAt: closesAtLocal ? new Date(closesAtLocal).toISOString() : null,
+      }),
     });
     if (!res.ok) throw new Error(await errorMessage(res, "Could not publish this form. Please try again."));
     const data = (await res.json()) as { url: string; slug: string };
@@ -84,6 +104,29 @@ export function BuilderPage({
           <option value="verified_email">Only people who verify their email</option>
         </select>
         <span className="text-muted-foreground">Applies when you Publish or Republish.</span>
+      </div>
+      <div className="mb-3 flex items-center gap-2 text-sm">
+        <label htmlFor="closes-at" className="font-medium">
+          Closes
+        </label>
+        <input
+          id="closes-at"
+          type="datetime-local"
+          value={closesAtLocal}
+          onChange={(e) => setClosesAtLocal(e.target.value)}
+          className="rounded-md border bg-background px-2 py-1"
+        />
+        {closesAtLocal ? (
+          <button
+            type="button"
+            onClick={() => setClosesAtLocal("")}
+            className="text-muted-foreground underline hover:text-foreground"
+          >
+            Clear
+          </button>
+        ) : (
+          <span className="text-muted-foreground">Leave blank for no expiry.</span>
+        )}
       </div>
       <div className="min-h-0 flex-1">
         <Builder

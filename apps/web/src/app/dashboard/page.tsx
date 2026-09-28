@@ -6,6 +6,7 @@ import { DraftModel } from "@/lib/db/models/Draft";
 import { FormModel } from "@/lib/db/models/Form";
 import { getUserId } from "@/lib/auth/session";
 import { slugify } from "@/lib/slug";
+import { currentTime } from "@/lib/now";
 import { buttonVariants } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "My forms" };
@@ -22,6 +23,8 @@ export default async function DashboardPage() {
   }).lean();
   const liveSlugs = new Set(forms.filter((f) => f.published).map((f) => f.slug));
   const verifiedSlugs = new Set(forms.filter((f) => f.accessMode === "verified_email").map((f) => f.slug));
+  const closesAtBySlug = new Map(forms.filter((f) => f.closesAt).map((f) => [f.slug, f.closesAt as Date]));
+  const now = currentTime();
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -51,9 +54,17 @@ export default async function DashboardPage() {
                   </p>
                 </div>
                 {live ? (
-                  <a href={`/f/${slug}`} className="text-sm text-muted-foreground hover:text-foreground">
-                    Live{verifiedSlugs.has(slug) ? " (verified email)" : ""}: /f/{slug}
-                  </a>
+                  <div className="text-right text-sm">
+                    <a href={`/f/${slug}`} className="text-muted-foreground hover:text-foreground">
+                      Live{verifiedSlugs.has(slug) ? " (verified email)" : ""}: /f/{slug}
+                    </a>
+                    {closesAtBySlug.has(slug) ? (
+                      <p className="text-xs text-muted-foreground">
+                        {closesAtBySlug.get(slug)!.getTime() < now ? "Closed " : "Closes "}
+                        {closesAtBySlug.get(slug)!.toLocaleString("en-GB", { timeZone: "UTC" })} UTC
+                      </p>
+                    ) : null}
+                  </div>
                 ) : (
                   <span className="text-sm text-muted-foreground">Not published</span>
                 )}

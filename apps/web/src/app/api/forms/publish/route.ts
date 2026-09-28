@@ -21,9 +21,27 @@ export async function POST(request: Request) {
     definition,
     slug: requestedSlug,
     accessMode,
-  } = (body ?? {}) as { definition?: unknown; slug?: unknown; accessMode?: unknown };
+    closesAt,
+  } = (body ?? {}) as { definition?: unknown; slug?: unknown; accessMode?: unknown; closesAt?: unknown };
   if (accessMode !== undefined && accessMode !== "anyone" && accessMode !== "verified_email") {
     return NextResponse.json({ error: "accessMode must be 'anyone' or 'verified_email'." }, { status: 422 });
+  }
+  // closesAt: null clears it, a date string sets it, and leaving the key out
+  // entirely (older callers, tests) keeps whatever the form already has —
+  // same "don't touch what you weren't told about" rule accessMode follows.
+  let parsedClosesAt: Date | null | undefined;
+  if ("closesAt" in (body as Record<string, unknown>)) {
+    if (closesAt === null) {
+      parsedClosesAt = null;
+    } else if (typeof closesAt === "string") {
+      const date = new Date(closesAt);
+      if (Number.isNaN(date.getTime())) {
+        return NextResponse.json({ error: "Enter a valid close date and time." }, { status: 422 });
+      }
+      parsedClosesAt = date;
+    } else {
+      return NextResponse.json({ error: "closesAt must be a date string or null." }, { status: 422 });
+    }
   }
   const parsed = FormDefinitionSchema.safeParse(definition);
   if (!parsed.success) {
@@ -57,6 +75,7 @@ export async function POST(request: Request) {
   form.ownerAccountId = userId;
   // Left as-is when the caller doesn't say, so republishing never silently loosens who may respond.
   if (accessMode) form.accessMode = accessMode;
+  if (parsedClosesAt !== undefined) form.closesAt = parsedClosesAt;
 
   const version = await FormVersionModel.create({
     formId: form._id,
@@ -69,7 +88,12 @@ export async function POST(request: Request) {
   await form.save();
 
   return NextResponse.json(
-    { slug: form.slug, url: `/f/${form.slug}`, accessMode: form.accessMode },
+    {
+      slug: form.slug,
+      url: `/f/${form.slug}`,
+      accessMode: form.accessMode,
+      closesAt: form.closesAt ? form.closesAt.toISOString() : null,
+    },
     { status: 200 },
   );
 }
