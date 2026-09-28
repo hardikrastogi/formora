@@ -173,30 +173,75 @@ describe("Builder", () => {
     expect(await screen.findByText("Saved")).toBeInTheDocument();
   });
 
-  it("with onSave, edits go to the host instead of localStorage, and the indicator reflects the result", async () => {
+  it("with onSave, editing shows 'Unsaved changes' and never calls the host until Save is clicked", async () => {
     const user = userEvent.setup();
     const onSave = vi.fn(async (_definition: FormDefinition) => {});
     render(<Builder initialDefinition={createBlankDefinition("host_saved", "My form")} onSave={onSave} />);
 
+    expect(screen.getByText("Saved")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Add Text field" }));
-    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1), { timeout: 2000 });
+    expect(await screen.findByText("Unsaved changes")).toBeInTheDocument();
+    expect(onSave).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
     expect(onSave.mock.calls[0][0].fields).toHaveLength(1);
     expect(await screen.findByText("Saved")).toBeInTheDocument();
-    expect(window.localStorage.getItem("formora-builder:host_saved")).toBeNull();
+
+    // Editing again after a save goes back to pending, not silently "Saved".
+    await user.click(screen.getByRole("button", { name: "Add Email field" }));
+    expect(await screen.findByText("Unsaved changes")).toBeInTheDocument();
   });
 
-  it("shows 'Could not save' when onSave fails, and saves again on the next edit", async () => {
+  it("shows 'Could not save' when the host's onSave rejects, and Save can be retried", async () => {
     const user = userEvent.setup();
-    const onSave = vi.fn<(d: FormDefinition) => Promise<void>>().mockRejectedValueOnce(new Error("offline")).mockResolvedValue(undefined);
+    const onSave = vi
+      .fn<(d: FormDefinition) => Promise<void>>()
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValue(undefined);
     render(<Builder initialDefinition={createBlankDefinition("host_fail", "My form")} onSave={onSave} />);
 
     await user.click(screen.getByRole("button", { name: "Add Text field" }));
-    expect(await screen.findByText("Could not save", undefined, { timeout: 2000 })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(await screen.findByText("Could not save")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Add Email field" }));
-    expect(await screen.findByText("Saved", undefined, { timeout: 2000 })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(await screen.findByText("Saved")).toBeInTheDocument();
     expect(onSave).toHaveBeenCalledTimes(2);
-    expect(onSave.mock.calls[1][0].fields).toHaveLength(2);
+  });
+
+  it("still backs up to localStorage in the background even when onSave is provided, for crash recovery only", async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn(async (_definition: FormDefinition) => {});
+    render(<Builder initialDefinition={createBlankDefinition("host_backup", "My form")} onSave={onSave} />);
+
+    await user.click(screen.getByRole("button", { name: "Add Text field" }));
+    await waitFor(() => {
+      const stored = JSON.parse(window.localStorage.getItem("formora-builder:host_backup") ?? "null");
+      expect(stored?.fields).toHaveLength(1);
+    });
+    // The background backup must never call the host itself — only clicking Save does.
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it("remounting with onSave resumes from the local backup, not the (older) definition the host passed in", async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn(async (_definition: FormDefinition) => {});
+    const { unmount } = render(
+      <Builder initialDefinition={createBlankDefinition("host_resume", "My form")} onSave={onSave} />,
+    );
+    await user.click(screen.getByRole("button", { name: "Add Text field" }));
+    await waitFor(() => {
+      expect(JSON.parse(window.localStorage.getItem("formora-builder:host_resume") ?? "null")?.fields).toHaveLength(
+        1,
+      );
+    });
+    // Never actually saved to the host — this simulates a refresh/crash before Save was clicked.
+    unmount();
+
+    render(<Builder initialDefinition={createBlankDefinition("host_resume", "My form")} onSave={onSave} />);
+    expect(screen.getByRole("button", { name: /^Text field/ })).toBeInTheDocument();
+    expect(await screen.findByText("Unsaved changes")).toBeInTheDocument();
   });
 
   it("has no Publish button when onPublish is not provided, and Share stays disabled", () => {

@@ -148,7 +148,7 @@ The smallest possible slice that's a genuinely working hosted form.
 - [ ] A verified domain with SPF/DKIM so anyone can receive sign-in links (owner task, optional for a demo)
 - [x] "Continue with Google": built in 5b-2, below
 - [x] Forms are owned by the account that first publishes them; only the owner can republish or unpublish (403/404 for anyone else). Ownerless forms from before accounts are claimed by the first signed-in publisher
-- [x] Drafts: the builder autosaves to the account (`PUT /api/drafts/[id]`, debounced) instead of localStorage; `/dashboard` lists my forms; `/builder/[id]` reopens one
+- [x] ~~Drafts: the builder autosaves to the account (`PUT /api/drafts/[id]`, debounced) instead of localStorage~~ — **revised after 5b shipped:** the debounced autosave-to-database was replaced by a manual Save button (one `PUT /api/drafts/[id]` per click), after concluding a deliberate save is simpler and gives the creator clearer control than a continuous background write. Unsaved work now survives a refresh, a closed tab, or a crashed browser via the browser's own `localStorage`, indefinitely and with no code-based expiry — not the account, until Save is actually clicked. `/dashboard` lists my forms (drafts *and* published forms, so a form published without ever clicking Save still shows up); `/builder/[id]` reopens one, preferring an unsaved local copy over the last saved version if one exists in that browser.
 - [x] Builder package: new `onSave` prop (0.4.0); without it the builder still falls back to localStorage
 - [ ] Viewing responses is owner-only, but the response dashboard itself is Phase 5d
 

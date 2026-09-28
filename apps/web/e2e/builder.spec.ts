@@ -74,15 +74,38 @@ test("a low-contrast primary colour shows an inline WCAG warning", async ({ page
   await expect(page.getByText(/below the WCAG AA minimum/)).toBeVisible();
 });
 
-test("work survives a reload because autosave saves to the server", async ({ page }) => {
-  const saved = page.waitForResponse((r) => r.url().includes("/api/drafts/") && r.request().method() === "PUT");
+test("unsaved work survives a reload via the browser's own local storage, without ever hitting the server", async ({
+  page,
+}) => {
+  // No Save click, and no request to /api/drafts should ever happen here —
+  // reload-recovery is now a browser-only concern, separate from the
+  // deliberate, explicit Save that persists to the account.
+  let draftRequestSeen = false;
+  page.on("request", (r) => {
+    if (r.url().includes("/api/drafts/")) draftRequestSeen = true;
+  });
+
   await page.getByLabel("Form name").fill("Reloaded form");
   await page.getByRole("button", { name: "Add Text field" }).click();
-  expect((await saved).ok()).toBe(true);
-  await expect(page.getByText("Saved")).toBeVisible();
+  await expect(page.getByText("Unsaved changes")).toBeVisible();
+
+  // The local backup is debounced (400ms) — wait for it to actually land before
+  // reloading, or the reload can race ahead of the pending write and lose it.
+  const id = new URL(page.url()).pathname.split("/").pop();
+  await page.waitForFunction(
+    (key) => {
+      const raw = window.localStorage.getItem(key);
+      return raw ? (JSON.parse(raw).name ?? null) : null;
+    },
+    `formora-builder:${id}`,
+    { timeout: 2000 },
+  );
 
   await page.reload();
   await page.waitForSelector(".fb-root");
   await expect(page.getByLabel("Form name")).toHaveValue("Reloaded form");
   await expect(page.locator(".fb-canvas-field-label")).toHaveText("Text field");
+  // Recovered work is still unsaved — it must not silently look "Saved".
+  await expect(page.getByText("Unsaved changes")).toBeVisible();
+  expect(draftRequestSeen).toBe(false);
 });

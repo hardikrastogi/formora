@@ -6,8 +6,8 @@ import { BuilderProvider, useBuilder } from "./context";
 import { Palette, PALETTE_DRAG_PREFIX } from "./Palette";
 import { Canvas, CANVAS_DROPPABLE_ID } from "./Canvas";
 import { Inspector } from "./Inspector";
-import { TopBar, type PublishState } from "./TopBar";
-import { useAutosave } from "./use-autosave";
+import { TopBar, type IndicatorState, type PublishState } from "./TopBar";
+import { useAutosaveWithoutHost, useLocalBackup } from "./use-autosave";
 import type { FieldTypeMeta } from "./store";
 
 export interface PublishResult {
@@ -23,9 +23,16 @@ export interface BuilderProps {
   /** Where to autosave to localStorage. Defaults to the form's id. */
   storageKey?: string;
   /**
-   * Host-supplied autosave. When given, edits are sent here (debounced)
-   * instead of to localStorage, and the save indicator reflects its result.
-   * Throw to show "Could not save".
+   * Called only when the person clicks the builder's own Save button — never
+   * automatically. Provide this to persist to your backend on demand; throw
+   * to show "Could not save". Omit it entirely to fall back to a fully
+   * automatic, localStorage-only save (no Save button shown) — useful for a
+   * standalone/demo builder with nowhere else to persist to.
+   *
+   * Either way, edits are continuously backed up to localStorage in the
+   * background so a refresh, a closed tab, or a crashed browser recovers
+   * exactly where editing left off; that backup is separate from, and not a
+   * substitute for, actually calling this to save.
    */
   onSave?: (definition: FormDefinition) => Promise<void>;
   /**
@@ -65,7 +72,37 @@ function BuilderInner({ storageKey, onSave, onPublish, onUnpublish, initialPubli
   const addField = useBuilder((s) => s.addField);
   const reorderFields = useBuilder((s) => s.reorderFields);
 
-  const saveState = useAutosave(storageKey, definition, isDirty, markSaved, onSave);
+  // Two mutually exclusive modes, both hooks always called (rules of hooks) but
+  // only one ever actually does anything, gated by whether onSave was given:
+  //   - onSave given: crash-recovery backup only: see BuilderProvider's own
+  //     read of this same key, and handleSave below for the real save.
+  //   - onSave omitted: localStorage IS the save, exactly as before.
+  useLocalBackup(storageKey, definition, isDirty && Boolean(onSave));
+  const autoSaveState = useAutosaveWithoutHost(storageKey, definition, isDirty && !onSave, markSaved);
+
+  const [manualSaveState, setManualSaveState] = useState<"idle" | "saving" | "error">("idle");
+  async function handleSave() {
+    if (!onSave) return;
+    setManualSaveState("saving");
+    try {
+      await onSave(definition);
+      markSaved();
+      setManualSaveState("idle");
+    } catch {
+      setManualSaveState("error");
+    }
+  }
+  // "saving"/"error" reflect the last Save click directly. Otherwise: any
+  // edit since the last successful save is "dirty" (unsaved), never silently
+  // shown as "saved" just because nothing has failed yet.
+  const indicatorState: IndicatorState = !onSave
+    ? autoSaveState
+    : manualSaveState !== "idle"
+      ? manualSaveState
+      : isDirty
+        ? "dirty"
+        : "saved";
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   const [publishState, setPublishState] = useState<PublishState>("idle");
@@ -157,7 +194,8 @@ function BuilderInner({ storageKey, onSave, onPublish, onUnpublish, initialPubli
   return (
     <div className="fb-root">
       <TopBar
-        saveState={saveState}
+        saveState={indicatorState}
+        onSave={onSave ? handleSave : undefined}
         onPublish={onPublish ? handlePublish : undefined}
         onUnpublish={onUnpublish ? handleUnpublish : undefined}
         unpublished={unpublished}
@@ -192,10 +230,11 @@ function BuilderInner({ storageKey, onSave, onPublish, onUnpublish, initialPubli
 }
 
 export function Builder({ initialDefinition, storageKey, onSave, onPublish, onUnpublish, initialPublished }: BuilderProps) {
+  const key = storageKey ?? `formora-builder:${initialDefinition.id}`;
   return (
-    <BuilderProvider initialDefinition={initialDefinition}>
+    <BuilderProvider initialDefinition={initialDefinition} storageKey={key}>
       <BuilderInner
-        storageKey={storageKey ?? `formora-builder:${initialDefinition.id}`}
+        storageKey={key}
         onSave={onSave}
         onPublish={onPublish}
         onUnpublish={onUnpublish}
