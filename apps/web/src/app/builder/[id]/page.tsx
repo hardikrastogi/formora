@@ -27,6 +27,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     slug: string;
     published: boolean;
     accessMode?: "anyone" | "verified_email";
+    closesAt?: Date | null;
   } | null>();
 
   return (
@@ -34,6 +35,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       formId={id}
       initialDefinition={(draft?.definition as FormDefinition | undefined) ?? null}
       initialAccessMode={form?.accessMode ?? "anyone"}
+      initialClosesAt={form?.closesAt ? form.closesAt.toISOString() : null}
       initialPublished={form?.published ? { url: `/f/${form.slug}`, slug: form.slug } : null}
     />
   );

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { getPublishedFormBySlug } from "@/lib/db/forms";
+import { currentTime } from "@/lib/now";
 import { RespondentIdentityModel } from "@/lib/db/models/RespondentIdentity";
 import { respondentCookieName, verifyRespondentToken } from "@/lib/respondent-session";
 import { PublicForm } from "./public-form";
@@ -30,6 +31,19 @@ export default async function PublicFormPage({ params }: PageProps) {
   const { slug } = await params;
   const published = await getPublishedFormBySlug(slug);
   if (!published) notFound();
+
+  if (published.form.closesAt && currentTime() > published.form.closesAt.getTime()) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-10">
+        <h1 className="mb-2 text-2xl font-bold tracking-tight">{published.definition.name}</h1>
+        <p role="status" className="text-muted-foreground">
+          This form closed to new responses on{" "}
+          {published.form.closesAt.toLocaleString("en-GB", { timeZone: "UTC", dateStyle: "long", timeStyle: "short" })}{" "}
+          UTC.
+        </p>
+      </div>
+    );
+  }
 
   let verifiedEmail: string | null = null;
   if (published.form.accessMode === "verified_email") {
