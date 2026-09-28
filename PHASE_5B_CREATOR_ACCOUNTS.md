@@ -180,6 +180,8 @@ The 5a caveat about slug collisions is now enforced instead of merely documented
 
 ## 6. Drafts: saving your work to your account
 
+> **Revised after this phase shipped:** the model and API routes below are unchanged, but *when* a save happens is not — saving to the database is now a deliberate Save-button click, not a 500ms debounce on every edit. Unsaved work is instead backed up to the browser's own `localStorage` indefinitely. Full details, including why this changed: `PHASE_5B3_MANUAL_SAVE.md`.
+
 ### `apps/web/src/lib/db/models/Draft.ts`
 
 | Field | Type | Meaning |
@@ -230,7 +232,7 @@ Then it does an upsert on `(ownerAccountId, definitionId)` setting `definition` 
 | `/builder/new` | `app/builder/new/page.tsx` | Signed out: to sign-in. Otherwise redirects to `/builder/<new random id>`. Creates nothing in the database yet. |
 | `/builder/[id]` | `app/builder/[id]/page.tsx` | Invalid id: 404. Signed out: to sign-in with `next` set to this page. Otherwise loads your draft (if any) and whether you have this form live, and renders the builder. |
 
-A brand-new form is only written to the database on its **first autosave**, so opening `/builder/new` and leaving without touching anything leaves no empty drafts behind.
+~~A brand-new form is only written to the database on its **first autosave**~~ — revised: it's written on its first manual **Save** click instead (see `PHASE_5B3_MANUAL_SAVE.md`). Either way, opening `/builder/new` and leaving without touching anything leaves no empty drafts behind. The dashboard's own query was also revised, in the same change, to show published forms that were never saved as a draft at all.
 
 ### `apps/web/src/app/builder/builder-page.tsx` (client)
 
@@ -245,6 +247,8 @@ Each throws an `Error` carrying the server's message on a non-2xx response, whic
 ---
 
 ## 8. The `@hardikrastogi/builder` change (version 0.4.0)
+
+> **Revised after this phase shipped, in version 0.5.0:** `onSave` is no longer called automatically on a debounce — only when the person clicks the builder's own Save button. The mechanics below (the prop existing, the "Could not save" error path, the dirty-tracking) are the foundation the 0.5.0 change builds on, but the *trigger* described here is superseded. Full details: `PHASE_5B3_MANUAL_SAVE.md`.
 
 New optional prop on `<Builder>`:
 

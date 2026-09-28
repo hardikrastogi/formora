@@ -104,10 +104,10 @@ test.describe("Phase 5: form close date", () => {
   test("the builder UI sets a close date on publish, shown on reload and on the dashboard", async ({ page }) => {
     await openNewBuilder(page, "expiry-ui");
     const builderUrl = page.url();
-    const saved = page.waitForResponse((r) => r.url().includes("/api/drafts/") && r.request().method() === "PUT");
+    // Publish sends whatever is currently in the editor directly — it does not
+    // depend on a draft ever having been saved, so no Save click is needed here.
     await page.getByLabel("Form name").fill("Expiry UI Test");
     await page.getByRole("button", { name: "Add Text field" }).click();
-    expect((await saved).ok()).toBe(true);
 
     const future = new Date(Date.now() + 2 * 60 * 60 * 1000);
     const pad = (n: number) => String(n).padStart(2, "0");

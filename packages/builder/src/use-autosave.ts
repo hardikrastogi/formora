@@ -4,39 +4,59 @@ import type { FormDefinition } from "@hardikrastogi/core";
 export type SaveState = "saved" | "saving" | "error";
 
 /**
- * Persists the definition on a short debounce. With `onSave` (a host-supplied
- * async function, typically a PATCH to a server) it saves there; without it,
- * it falls back to localStorage so the builder still works standalone.
+ * A short-debounced backup to localStorage, so a refresh, a closed tab, or a
+ * crashed browser recovers exactly where editing left off. This runs
+ * unconditionally — with or without a host-supplied `onSave` — because it is
+ * not "the save": it is crash recovery for whatever hasn't been saved yet.
+ *
+ * It never calls a host function and never fails loudly: a full or disabled
+ * localStorage just means no crash recovery for this session, not a broken
+ * editor.
  */
-export function useAutosave(
+export function useLocalBackup(storageKey: string, definition: FormDefinition, isDirty: boolean): void {
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      try {
+        window.localStorage.setItem(storageKey, JSON.stringify(definition));
+      } catch {
+        // Storage full, disabled, or unavailable (private browsing in some
+        // browsers) — silently give up on crash recovery for this session.
+      }
+    }, 400);
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, [definition, isDirty, storageKey]);
+}
+
+/**
+ * Only used when the host gives no `onSave` at all (a standalone/demo
+ * builder with nowhere else to persist to). In that case localStorage *is*
+ * the save, so this drives the "Saved"/"Saving…" indicator and clears the
+ * dirty flag — the same automatic behaviour the builder has always had
+ * without a host backend. The moment a host provides `onSave`, saving
+ * becomes a deliberate action (a Save button) instead: see Builder.tsx.
+ */
+export function useAutosaveWithoutHost(
   storageKey: string,
   definition: FormDefinition,
   isDirty: boolean,
   markSaved: () => void,
-  onSave?: (definition: FormDefinition) => Promise<void>,
 ): SaveState {
   const [state, setState] = useState<SaveState>("saved");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const latest = useRef(definition);
-  latest.current = definition;
-  // Kept in a ref so an inline (non-memoized) onSave doesn't restart the debounce every render.
-  const save = useRef(onSave);
-  save.current = onSave;
 
   useEffect(() => {
     if (!isDirty) return;
     setState("saving");
     if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(async () => {
+    timer.current = setTimeout(() => {
       try {
-        if (save.current) {
-          await save.current(definition);
-          // Edits made while the request was in flight are not saved yet:
-          // leave the state dirty so the next debounce picks them up.
-          if (latest.current !== definition) return;
-        } else {
-          window.localStorage.setItem(storageKey, JSON.stringify(definition));
-        }
+        window.localStorage.setItem(storageKey, JSON.stringify(definition));
         setState("saved");
         markSaved();
       } catch {

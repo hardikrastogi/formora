@@ -86,9 +86,10 @@ export function BuilderPage({
         </Link>
       </div>
       <p className="mb-3 text-sm text-muted-foreground">
-        Drag fields from the palette, or click one to add it. Select a field to edit it on the right. Changes save to
-        your account automatically. Publish to get a shareable link anyone can fill out; Unpublish stops it
-        accepting responses, and you can publish again any time.
+        Drag fields from the palette, or click one to add it. Select a field to edit it on the right. Click Save to
+        keep your changes on your account; until then, this browser remembers them even if the tab closes or
+        refreshes, but a different browser or device won&apos;t see them. Publish to get a shareable link anyone can
+        fill out; Unpublish stops it accepting responses, and you can publish again any time.
       </p>
       <div className="mb-3 flex items-center gap-2 text-sm">
         <label htmlFor="access-mode" className="font-medium">

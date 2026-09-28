@@ -125,20 +125,29 @@ test.describe("Phase 5b: creator accounts", () => {
 
   test("a new form appears on the dashboard once saved, and reopens from there", async ({ page }) => {
     await openNewBuilder(page, "dash");
-    const saved = page.waitForResponse((r) => r.url().includes("/api/drafts/") && r.request().method() === "PUT");
     await page.getByLabel("Form name").fill("Dashboard listing test");
+    expect(await page.getByText("Unsaved changes")).toBeVisible();
+
+    const saved = page.waitForResponse((r) => r.url().includes("/api/drafts/") && r.request().method() === "PUT");
+    await page.getByRole("button", { name: "Save" }).click();
     expect((await saved).ok()).toBe(true);
+    await expect(page.getByText("Saved")).toBeVisible();
 
     await page.getByRole("link", { name: "All my forms" }).click();
     await page.getByRole("link", { name: "Dashboard listing test" }).click();
     await expect(page.getByLabel("Form name")).toHaveValue("Dashboard listing test");
   });
 
-  test("autosave failures are shown, not swallowed", async ({ page }) => {
+  test("save failures are shown, not swallowed, and Save can be retried", async ({ page }) => {
     await openNewBuilder(page, "failsave");
     await page.route("**/api/drafts/**", (route) => route.fulfill({ status: 500, body: "{}" }));
     await page.getByLabel("Form name").fill("Will not save");
+    await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByText("Could not save")).toBeVisible();
+
+    await page.unroute("**/api/drafts/**");
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByText("Saved")).toBeVisible();
   });
 
   test("no automatically detectable accessibility violations on the builder and dashboard", async ({ page }) => {

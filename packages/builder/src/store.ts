@@ -60,7 +60,7 @@ function touch(draft: FormDefinition) {
   draft.updatedAt = new Date().toISOString();
 }
 
-export function createBuilderStore(initial: FormDefinition) {
+export function createBuilderStore(initial: FormDefinition, startDirty = false) {
   return create<BuilderStore>((set, get) => {
     function commit(recipe: (draft: FormDefinition) => void) {
       set((state) => {
@@ -79,7 +79,10 @@ export function createBuilderStore(initial: FormDefinition) {
       mode: "edit",
       past: [],
       future: [],
-      isDirty: false,
+      // True when `initial` came from a local crash-recovery backup rather
+      // than what the host actually confirmed saved — it genuinely hasn't
+      // been saved yet, so it must not silently show as "Saved".
+      isDirty: startDirty,
 
       loadDefinition: (definition) =>
         set({ definition, selectedFieldId: null, past: [], future: [], isDirty: false }),

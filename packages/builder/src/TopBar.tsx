@@ -1,9 +1,13 @@
 import { useBuilder } from "./context";
 
 export type PublishState = "idle" | "publishing" | "unpublishing" | "error";
+/** "dirty" only applies when a host provides onSave: edits exist that haven't been saved yet. */
+export type IndicatorState = "saved" | "saving" | "error" | "dirty";
 
 export interface TopBarProps {
-  saveState: "saved" | "saving" | "error";
+  saveState: IndicatorState;
+  /** Provide to show a Save button; the indicator then reflects manual saves instead of autosaving. */
+  onSave?: () => void;
   onPublish?: () => void;
   onUnpublish?: () => void;
   unpublished?: boolean;
@@ -15,6 +19,7 @@ export interface TopBarProps {
 
 export function TopBar({
   saveState,
+  onSave,
   onPublish,
   onUnpublish,
   unpublished,
@@ -62,6 +67,11 @@ export function TopBar({
               Preview
             </button>
           </div>
+          {onSave ? (
+            <button type="button" onClick={onSave} disabled={saveState === "saving"}>
+              {saveState === "saving" ? "Saving…" : "Save"}
+            </button>
+          ) : null}
           {onPublish ? (
             <button type="button" onClick={onPublish} disabled={busy}>
               {publishState === "publishing" ? "Publishing…" : publishedUrl ? "Republish" : "Publish"}
@@ -81,7 +91,13 @@ export function TopBar({
             Share
           </button>
           <span className="fb-save-state" role="status">
-            {saveState === "saving" ? "Saving…" : saveState === "error" ? "Could not save" : "Saved"}
+            {saveState === "saving"
+              ? "Saving…"
+              : saveState === "error"
+                ? "Could not save"
+                : saveState === "dirty"
+                  ? "Unsaved changes"
+                  : "Saved"}
           </span>
         </div>
       </div>
