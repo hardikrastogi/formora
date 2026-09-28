@@ -435,9 +435,9 @@ docker exec formora-mongo mongosh formora_dev --eval 'db.submissions.find().toAr
 Stated explicitly so nothing here is mistaken for a bug:
 
 - ~~No ownership/authorization.~~ Fixed in 5b: publish and unpublish check `ownerAccountId`. Remaining gap: ownerless forms from before accounts can be claimed by the first signed-in publisher.
-- **No respondent identity.** `respondentIdentityId` exists on `Submission` but is always `null` — meaningless until 5c adds verified-email respondents.
+- ~~No respondent identity.~~ Fixed in 5c: `respondentIdentityId` is set on every submission to a `verified_email` form, pointing at the `RespondentIdentity` created when that email was verified. Still `null` for `anyone`-mode forms, which is correct — there's no identity to point at.
 - **`allowResponseEditing` and `limitOneResponsePerRespondent` are stored but inert** — no code path reads or enforces them yet.
-- **No builder UI for `closesAt` / `maxResponses`** — they can only be set by hand-editing the database right now, even though the submit route already enforces them.
+- ~~No builder UI for `closesAt`.~~ Fixed shortly after 5c shipped: a "Closes" date/time field in the builder, enforced both in the submit route (410 past the date) and on the public page itself (a "This form closed" message instead of the form), shown on the dashboard. `maxResponses` still has no builder UI — it can only be set by hand-editing the database, even though the submit route already enforces it.
 - **No rate limiting** beyond `maxResponses`/`closesAt` — no IP-based abuse protection yet.
 - **Custom field types can't be re-validated server-side** — only the 13 built-in types are covered by `collectServerErrors`.
 - **Slug collisions between unrelated forms are possible** — see §5.
