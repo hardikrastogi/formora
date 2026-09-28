@@ -178,6 +178,15 @@ Added after 5b shipped: creators can now sign up and log in with email+password 
 
 **Milestone met:** a creator can require email verification before someone can fill out a sensitive form. 14 new e2e tests, all passing. Deep reference: `PHASE_5C_VERIFIED_EMAIL.md`.
 
+### Known gaps to fix later (tracked, not yet scheduled to a phase)
+
+- [ ] No account settings page — can't change email, remove a password, or disconnect Google from a creator account
+- [ ] No rate limiting on login *attempts* (password guessing) — only email-sending is rate-limited (5b's magic link request, 5b-2's signup/reset, 5c's respondent verification)
+- [ ] `maxResponses` has no builder UI — can only be set by hand-editing the database, even though the submit route already enforces it (same situation `closesAt` was in before it got wired up)
+- [ ] `limitOneResponsePerRespondent` is stored on `Form` but not enforced anywhere yet, and has no builder UI either
+- [ ] The magic-link sign-in form (`SignInForm`, 5b) clears its email field after a failed submission, the same bug already fixed in the password login form — low severity (one field to retype), left alone when found in 5b-2
+- [ ] A verified domain with SPF/DKIM in Resend, so sign-in/verification email reaches any address, not just the Resend account's own — owner task, optional for a demo
+
 ### Phase 5d — Response dashboard, account linking, and editing
 
 - [ ] Creator dashboard per form: total response count, recent activity, server-side cursor-paginated list (never loads all responses at once)
