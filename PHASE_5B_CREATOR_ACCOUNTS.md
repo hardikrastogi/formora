@@ -340,8 +340,8 @@ docker exec -it formora-mongo mongosh formora_dev --eval "db.forms.find({}, {slu
 ## 13. Everything Phase 5b deliberately does NOT do yet
 
 - **Anyone but you can't sign in on the live site** until a domain is verified with Resend. The test sender delivers only to the address that owns the Resend account.
-- **No "Continue with Google".** Deferred on purpose; magic link only for now.
-- **No rate limiting on sign-in requests.** Someone could spam the button and use up the free email allowance (about 100 a day). Worth adding before sharing the site widely.
+- ~~No "Continue with Google".~~ Fixed in 5b-2: Google, plus email+password with a forgot-password flow, both added alongside this phase's magic link. See `PHASE_5B2_PASSWORD_AND_GOOGLE_AUTH.md`.
+- **No rate limiting on sign-in requests.** Someone could spam the button and use up the free email allowance (about 100 a day). Worth adding before sharing the site widely. (5b-2 added the same limits for its own signup/reset emails, but this original magic-link endpoint from 5b was not revisited.)
 - **No account or draft deletion**, and no account settings page.
 - **Forms from before accounts** (the old demo slugs) can be claimed by the first signed-in person to publish them. Harmless while all such data is your own demo data.
 - **No response viewing yet.** Owner-only access is designed in, but the response dashboard is Phase 5d.
