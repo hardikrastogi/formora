@@ -7,6 +7,7 @@ import { FormModel } from "@/lib/db/models/Form";
 import { FormVersionModel } from "@/lib/db/models/FormVersion";
 import { SubmissionModel } from "@/lib/db/models/Submission";
 import { respondentCookieName, verifyRespondentToken } from "@/lib/respondent-session";
+import { hashToken, newToken } from "@/lib/respondent-verification";
 
 const DUPLICATE_KEY_ERROR_CODE = 11000;
 
@@ -82,6 +83,11 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
     return NextResponse.json({ errors }, { status: 422 });
   }
 
+  // The one credential that lets this respondent's own browser recognise
+  // its own submission later (to show "already submitted" after a refresh)
+  // and edit it — without a Formora account. Only the hash is ever stored.
+  const editToken = newToken();
+
   try {
     const submission = await SubmissionModel.create({
       formId: form._id,
@@ -90,14 +96,21 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
       answers,
       idempotencyKey,
       respondentIdentityId,
+      editTokenHash: hashToken(editToken),
     });
-    return NextResponse.json({ submissionId: String(submission._id) }, { status: 201 });
+    return NextResponse.json({ submissionId: String(submission._id), editToken }, { status: 201 });
   } catch (error) {
     // A retried click/network retry with the same key lands here — the
-    // original submission already succeeded, so this is success too.
+    // original submission already succeeded, so this is success too. The
+    // original editToken isn't recoverable from a duplicate-key retry (only
+    // its hash was stored), but the client already has it from the first
+    // response — this path only re-fires when that first response was lost.
     if (isDuplicateKeyError(error)) {
       const existing = await SubmissionModel.findOne({ formId: form._id, idempotencyKey });
-      return NextResponse.json({ submissionId: existing ? String(existing._id) : null }, { status: 201 });
+      return NextResponse.json(
+        { submissionId: existing ? String(existing._id) : null, editToken: null },
+        { status: 201 },
+      );
     }
     throw error;
   }

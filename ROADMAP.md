@@ -131,7 +131,8 @@ The smallest possible slice that's a genuinely working hosted form.
 - [x] Public page at `/f/[slug]` rendering the published `FormVersion` via `FormRenderer` — no Formora account required
 - [x] Submission API route: validate the answers against `core`'s Zod schema **and** each field type's format check (email/url) again on the server, then persist via Mongoose
 - [x] `FormSubmission` records which `FormVersion` (not just which `schemaVersion` number) it answered
-- [x] Success state after submit: "Your submission has been recorded," only shown after the server confirms it was saved
+- [x] ~~Success state after submit: "Your submission has been recorded," only shown after the server confirms it was saved~~ — extended after 5c: the confirmation now survives a refresh (via a per-submission edit token in localStorage, not just in-memory React state), and includes an "Edit your response" button that reopens the form pre-filled and updates the same submission rather than creating a new one. See `PHASE_5_PUBLIC_FORM_UX.md`
+- [x] The public form page (`/f/[slug]`) is now a genuinely separate page — no Formora site header, footer, or nav — the same way opening a Google Forms link shows only the form, not Google's own site chrome (`PHASE_5_PUBLIC_FORM_UX.md`)
 - [x] Idempotency key per submission attempt (unique index on `formId + idempotencyKey`) so retries/double-clicks can't create duplicates
 - [x] OG meta tags on `/f/[slug]` for WhatsApp/email/social link previews
 - [x] Unpublishing (410 on new submissions) and a never-published/unknown slug (404) both handled distinctly
@@ -195,8 +196,8 @@ Added after 5b shipped: creators can now sign up and log in with email+password 
 - [ ] Database indexes: `formId + submittedAt`, `formId + responseId`, `respondentIdentityId + submittedAt`
 - [ ] Authorization check on every list/detail/export endpoint — ownership only
 - [ ] Account linking: creating an account with the same verified email links prior anonymous-to-Formora-but-verified submissions; a "Your responses" section shows only form name + date
-- [ ] Per-form `allowResponseEditing` toggle; when on, a re-verified respondent can open and update their own response (never someone else's)
-- [ ] `submittedAt`, `updatedAt`, `revisionNumber` recorded on every edit
+- [ ] Per-form `allowResponseEditing` toggle (creator-controlled on/off) — a basic, always-on version of the edit itself (via a per-submission edit token, no re-verification needed) already shipped ahead of this phase; see `PHASE_5_PUBLIC_FORM_UX.md`. Still missing here: the creator's ability to turn it off, and tying it to `RespondentIdentity` re-verification for `verified_email` forms specifically
+- [x] ~~`submittedAt`, `updatedAt`, `revisionNumber` recorded on every edit~~ — done as part of the edit token work above
 
 **Milestone:** creators can safely browse/export large response sets, and returning respondents can find and edit their own past answers.
 
