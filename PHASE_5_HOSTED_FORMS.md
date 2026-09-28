@@ -58,7 +58,7 @@ All three live in `apps/web/src/lib/db/models/`.
 | `ownerAccountId` | Which creator account owns this form. | **Yes since 5b** — set by the first signed-in publisher; only that account can republish or unpublish. Forms published before 5b have `null` and are claimed by the first signed-in publisher. |
 | `published` | Whether `/f/<slug>` and the submit route accept traffic. | Yes |
 | `currentVersionId` | Points at the `FormVersion` currently live. | Yes |
-| `allowResponseEditing` | Whether a respondent can edit their own past answer. | **No** — field exists, no code reads it yet (Phase 5d) |
+| `allowResponseEditing` | Whether a respondent can edit their own past answer. | The field itself is still unused, but editing already works, always on, via a per-submission edit token — no creator toggle yet. See `PHASE_5_PUBLIC_FORM_UX.md` |
 | `limitOneResponsePerRespondent` | Cap one submission per identity. | **No** — field exists, unused (needs Phase 5c's identities to mean anything) |
 | `closesAt` | A date after which submissions are rejected. | **Yes** — checked in the submit route |
 | `maxResponses` | A hard cap on submission count. | **Yes** — checked in the submit route |
@@ -436,7 +436,7 @@ Stated explicitly so nothing here is mistaken for a bug:
 
 - ~~No ownership/authorization.~~ Fixed in 5b: publish and unpublish check `ownerAccountId`. Remaining gap: ownerless forms from before accounts can be claimed by the first signed-in publisher.
 - ~~No respondent identity.~~ Fixed in 5c: `respondentIdentityId` is set on every submission to a `verified_email` form, pointing at the `RespondentIdentity` created when that email was verified. Still `null` for `anyone`-mode forms, which is correct — there's no identity to point at.
-- **`allowResponseEditing` and `limitOneResponsePerRespondent` are stored but inert** — no code path reads or enforces them yet.
+- ~~`allowResponseEditing` ... are stored but inert~~ — editing itself is fixed (see `PHASE_5_PUBLIC_FORM_UX.md`), though the `allowResponseEditing` field remains unused since editing is currently always-on rather than creator-toggled. **`limitOneResponsePerRespondent` is still stored but inert** — no code path reads or enforces it yet.
 - ~~No builder UI for `closesAt`.~~ Fixed shortly after 5c shipped: a "Closes" date/time field in the builder, enforced both in the submit route (410 past the date) and on the public page itself (a "This form closed" message instead of the form), shown on the dashboard. `maxResponses` still has no builder UI — it can only be set by hand-editing the database, even though the submit route already enforces it.
 - **No rate limiting** beyond `maxResponses`/`closesAt` — no IP-based abuse protection yet.
 - **Custom field types can't be re-validated server-side** — only the 13 built-in types are covered by `collectServerErrors`.

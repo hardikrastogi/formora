@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@hardikrastogi/react/styles.css";
 import "./globals.css";
-import { SiteHeader } from "@/components/site-header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,19 +22,14 @@ export const metadata: Metadata = {
     "Describe a form as JSON and render a working, validated, themeable form from it. Installable npm packages for any React app.",
 };
 
+// Bare shell only — the header and footer live in (site)/layout.tsx, not
+// here, so a public form page under /f/[slug] can render with no site chrome
+// at all. Every route still gets this one: fonts, globals.css, and the base
+// metadata every page's own metadata builds on.
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
-        <SiteHeader />
-        <main className="flex-1">{children}</main>
-        <footer className="border-t py-6 text-center text-sm text-muted-foreground">
-          Formora is open source under the MIT license.
-        </footer>
-      </body>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+      <body className="flex h-full min-h-full flex-col">{children}</body>
     </html>
   );
 }

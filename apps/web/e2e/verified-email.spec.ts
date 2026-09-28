@@ -105,7 +105,9 @@ test.describe("Phase 5c: verified-email respondents", () => {
     const email = uniqueEmail("respondent").toUpperCase();
 
     await page.goto(`/f/${slug}`);
-    await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Log in" })).toBeVisible();
+    // No site nav on a public form page by design — it shows only the form
+    // itself, the way opening a Google Forms link never shows Google's own site.
+    await expect(page.getByRole("navigation", { name: "Main" })).toHaveCount(0);
     await page.getByLabel("Your email address").fill(email);
     await page.getByRole("button", { name: "Email me a link" }).click();
     await expect(page.getByText("Check your email")).toBeVisible();

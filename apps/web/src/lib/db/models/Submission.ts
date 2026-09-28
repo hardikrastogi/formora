@@ -11,6 +11,12 @@ const SubmissionSchema = new Schema(
     respondentIdentityId: { type: String, default: null },
     revisionNumber: { type: Number, default: 1 },
     submittedAt: { type: Date, default: Date.now },
+    // Lets the respondent's own browser recognise "I already answered this"
+    // after a refresh, and lets them come back later to edit their answer,
+    // all without a Formora account. Only the hash is stored — see
+    // /api/forms/[slug]/submission/*. Nullable so old submissions from
+    // before this field existed just can't be looked up or edited.
+    editTokenHash: { type: String, default: null },
   },
   { timestamps: true },
 );
