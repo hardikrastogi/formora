@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { consumeAccountToken } from "@/lib/auth/account-tokens";
 import { upsertVerifiedPasswordUser } from "@/lib/auth/users";
+import { linkRespondentIdentity } from "@/lib/account-linking";
 
 /**
  * The "Continue" button on the emailed signup link. A GET from a mail
@@ -24,5 +25,8 @@ export async function POST(request: Request) {
   }
 
   await upsertVerifiedPasswordUser(consumed.email, consumed.pendingPasswordHash);
+  // Phase 5d: this account just became real and proven — connect it to any
+  // respondent identity already sitting under the same email.
+  await linkRespondentIdentity(consumed.email);
   return NextResponse.json({ ok: true, email: consumed.email }, { status: 200 });
 }

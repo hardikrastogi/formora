@@ -7,6 +7,7 @@ import { sendMagicLink } from "@/lib/auth/send-magic-link";
 import { findUserByEmail } from "@/lib/auth/users";
 import { verifyPassword } from "@/lib/auth/password";
 import { getEnv, isGoogleConfigured } from "@/lib/env";
+import { linkRespondentIdentity } from "@/lib/account-linking";
 
 // Passing a function makes Auth.js build its config lazily, per request, so
 // nothing tries to reach MongoDB — or validate env vars — while `next build`
@@ -75,6 +76,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => ({
       : []),
   ],
   pages: { signIn: "/signin", verifyRequest: "/signin/check-email" },
+  events: {
+    // Fires only when the adapter creates a brand-new user — covers the
+    // magic-link and Google paths (the password-signup path calls the same
+    // linkRespondentIdentity directly, since it bypasses the adapter's own
+    // user creation entirely; see /api/account/verify).
+    async createUser({ user }) {
+      if (user.email) await linkRespondentIdentity(user.email);
+    },
+  },
   callbacks: {
     // Runs on every sign-in and every subsequent request. `user` is only
     // present right after sign-in; carry the id forward on the token itself
