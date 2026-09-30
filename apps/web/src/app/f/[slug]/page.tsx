@@ -32,13 +32,13 @@ export default async function PublicFormPage({ params }: PageProps) {
   const published = await getPublishedFormBySlug(slug);
   if (!published) notFound();
 
-  if (published.form.closesAt && currentTime() > published.form.closesAt.getTime()) {
+  if (published.closesAt && currentTime() > new Date(published.closesAt).getTime()) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-10">
         <h1 className="mb-2 text-2xl font-bold tracking-tight">{published.definition.name}</h1>
         <p role="status" className="text-muted-foreground">
           This form closed to new responses on{" "}
-          {published.form.closesAt.toLocaleString("en-GB", { timeZone: "UTC", dateStyle: "long", timeStyle: "short" })}{" "}
+          {new Date(published.closesAt).toLocaleString("en-GB", { timeZone: "UTC", dateStyle: "long", timeStyle: "short" })}{" "}
           UTC.
         </p>
       </div>
@@ -46,7 +46,7 @@ export default async function PublicFormPage({ params }: PageProps) {
   }
 
   let verifiedEmail: string | null = null;
-  if (published.form.accessMode === "verified_email") {
+  if (published.accessMode === "verified_email") {
     const cookie = (await cookies()).get(respondentCookieName(published.formId))?.value;
     const identityId = verifyRespondentToken(cookie, published.formId);
     const identity = identityId
