@@ -23,7 +23,7 @@ export default async function VerifyPage({
   const { slug } = await params;
   const { token } = await searchParams;
   const published = await getPublishedFormBySlug(slug);
-  if (!published || published.form.accessMode !== "verified_email") notFound();
+  if (!published || published.accessMode !== "verified_email") notFound();
 
   return (
     <div className="mx-auto max-w-md px-4 py-16">

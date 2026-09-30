@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db/connect";
 import { FormModel } from "@/lib/db/models/Form";
 import { getUserId } from "@/lib/auth/session";
+import { invalidatePublishedForm } from "@/lib/db/forms";
 
 export async function POST(_request: Request, context: { params: Promise<{ slug: string }> }) {
   const userId = await getUserId();
@@ -20,6 +21,7 @@ export async function POST(_request: Request, context: { params: Promise<{ slug:
   if (!form) {
     return NextResponse.json({ error: "No form found for this slug." }, { status: 404 });
   }
+  invalidatePublishedForm(form.slug);
 
   // Existing responses and the form itself are untouched — only new
   // submissions are rejected (enforced in the submit route).

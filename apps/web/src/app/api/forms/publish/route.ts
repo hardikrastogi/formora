@@ -5,6 +5,7 @@ import { FormModel } from "@/lib/db/models/Form";
 import { FormVersionModel } from "@/lib/db/models/FormVersion";
 import { isValidSlug, slugify } from "@/lib/slug";
 import { getUserId } from "@/lib/auth/session";
+import { invalidatePublishedForm } from "@/lib/db/forms";
 
 export async function POST(request: Request) {
   const userId = await getUserId();
@@ -86,6 +87,7 @@ export async function POST(request: Request) {
   form.published = true;
   form.currentVersionId = version._id;
   await form.save();
+  invalidatePublishedForm(form.slug);
 
   return NextResponse.json(
     {
