@@ -179,12 +179,31 @@ Added after 5b shipped: creators can now sign up and log in with email+password 
 
 **Milestone met:** a creator can require email verification before someone can fill out a sensitive form. 14 new e2e tests, all passing. Deep reference: `PHASE_5C_VERIFIED_EMAIL.md`.
 
-### Known gaps to fix later (tracked, not yet scheduled to a phase)
+### Prioritized hardening and scalability backlog
+
+Tracked here so these gaps are fixed as the hosted product progresses. They are not blockers for the already-shipped demo unless stated otherwise.
+
+#### High value — do soon
+
+- [ ] **Centralized, validated environment variables.** Add one server-only `lib/env.ts` that uses Zod to parse every environment variable once and fails at startup with a readable error. Validate required values, URLs/connection strings, environment-specific requirements, and paired credentials such as `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET`. Application code must consume the validated config instead of reading `process.env.*` throughout the codebase
+- [ ] **Rate-limit password login attempts.** Protect credential login itself, not only email-sending endpoints. Apply per-account/email and per-IP limits with progressive backoff or temporary lockout, return non-enumerating errors, and record enough security telemetry to identify attacks without logging passwords or sensitive tokens
+- [ ] **Security headers.** Add and test an appropriate Content Security Policy plus anti-framing, referrer, MIME-sniffing, permissions, and HTTPS/HSTS headers. Ensure Auth.js, Google sign-in, Resend, Vercel, and public form sharing still work; make the deliberate `/f/[slug]` embedding policy explicit rather than accidentally allowing or blocking framing
+- [ ] **Cache published public forms.** Cache the immutable `FormVersion` used by `/f/[slug]`, keyed by the form/current version identity, so public traffic does not query MongoDB for the same definition on every request. Invalidate or revalidate correctly on publish, republish, and unpublish; never cache draft or owner-only data
+
+#### Medium value — before real traffic
+
+- [ ] **Production error monitoring.** Add a service such as Sentry (free tier is sufficient initially), including server, route-handler, and client errors. Configure source maps and release/environment tags, and scrub form answers, emails, tokens, secrets, and other PII before events leave Formora
+- [ ] **Move distributed rate limits off Mongo document-count queries.** Replace per-email/per-IP `countDocuments` checks with atomic, expiring counters in Redis/Upstash/Vercel KV or an equivalent shared store before traffic scales. Preserve the current limits and fail safely if the rate-limit store is unavailable
+
+#### Lower priority — complete as the related UI/operations work lands
+
+- [ ] **Health endpoint.** Add `/api/health` with a cheap liveness response and, if needed, a separately defined readiness check for dependencies such as MongoDB. Do not expose configuration, credentials, stack traces, database details, or user data
+- [ ] **`maxResponses` builder UI.** The submit route already enforces the cap, but creators can currently set it only by editing the database manually. Add, validate, save, display, and clear the setting through the builder
+- [ ] **`limitOneResponsePerRespondent` enforcement and UI.** Add the builder control and enforce it atomically. Define behavior separately for `verified_email` respondents and anonymous `anyone` forms so the setting does not pretend to provide identity guarantees that anonymous mode cannot support
+
+#### Other tracked product gaps
 
 - [ ] No account settings page — can't change email, remove a password, or disconnect Google from a creator account
-- [ ] No rate limiting on login *attempts* (password guessing) — only email-sending is rate-limited (5b's magic link request, 5b-2's signup/reset, 5c's respondent verification)
-- [ ] `maxResponses` has no builder UI — can only be set by hand-editing the database, even though the submit route already enforces it (same situation `closesAt` was in before it got wired up)
-- [ ] `limitOneResponsePerRespondent` is stored on `Form` but not enforced anywhere yet, and has no builder UI either
 - [ ] The magic-link sign-in form (`SignInForm`, 5b) clears its email field after a failed submission, the same bug already fixed in the password login form — low severity (one field to retype), left alone when found in 5b-2
 - [ ] A verified domain with SPF/DKIM in Resend, so sign-in/verification email reaches any address, not just the Resend account's own — owner task, optional for a demo
 
