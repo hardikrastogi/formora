@@ -10,6 +10,7 @@ import {
   respondentCookieName,
 } from "@/lib/respondent-session";
 import { hashToken } from "@/lib/respondent-verification";
+import { linkRespondentIdentity } from "@/lib/account-linking";
 
 /**
  * The respondent pressed "Continue to form" on the page the emailed link
@@ -52,6 +53,10 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
     { $set: { lastVerifiedAt: now }, $setOnInsert: { verifiedAt: now } },
     { upsert: true, new: true },
   );
+  // Phase 5d: a creator account with this same email might already exist —
+  // connect the two, without ever creating a Formora account for the
+  // respondent themselves.
+  await linkRespondentIdentity(challenge.email);
 
   const response = NextResponse.json({ ok: true }, { status: 200 });
   response.cookies.set(respondentCookieName(String(form._id)), createRespondentToken(String(identity._id), String(form._id)), {

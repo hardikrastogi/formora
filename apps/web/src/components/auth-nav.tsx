@@ -29,6 +29,9 @@ export function AuthNav() {
       <Link href="/dashboard" className="text-muted-foreground hover:text-foreground">
         My forms
       </Link>
+      <Link href="/my-responses" className="text-muted-foreground hover:text-foreground">
+        Your responses
+      </Link>
       <Link href="/signout" className="text-muted-foreground hover:text-foreground">
         Sign out
       </Link>

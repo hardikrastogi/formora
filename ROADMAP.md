@@ -207,18 +207,18 @@ Tracked here so these gaps are fixed as the hosted product progresses. They are 
 - [ ] The magic-link sign-in form (`SignInForm`, 5b) clears its email field after a failed submission, the same bug already fixed in the password login form — low severity (one field to retype), left alone when found in 5b-2
 - [ ] A verified domain with SPF/DKIM in Resend, so sign-in/verification email reaches any address, not just the Resend account's own — owner task, optional for a demo
 
-### Phase 5d — Response dashboard, account linking, and editing
+### Phase 5d — Response dashboard, account linking, and editing ✅ DONE
 
-- [ ] Creator dashboard per form: total response count, recent activity, server-side cursor-paginated list (never loads all responses at once)
-- [ ] Search, filters, sorting, and a response-details view with complete answers
-- [ ] Async CSV/Excel export for large response sets
-- [ ] Database indexes: `formId + submittedAt`, `formId + responseId`, `respondentIdentityId + submittedAt`
-- [ ] Authorization check on every list/detail/export endpoint — ownership only
-- [ ] Account linking: creating an account with the same verified email links prior anonymous-to-Formora-but-verified submissions; a "Your responses" section shows only form name + date
-- [ ] Per-form `allowResponseEditing` toggle (creator-controlled on/off) — a basic, always-on version of the edit itself (via a per-submission edit token, no re-verification needed) already shipped ahead of this phase; see `PHASE_5_PUBLIC_FORM_UX.md`. Still missing here: the creator's ability to turn it off, and tying it to `RespondentIdentity` re-verification for `verified_email` forms specifically
+- [x] Creator dashboard per form: total response count, server-side cursor-paginated list (never loads all responses at once) — `/forms/[slug]/responses`
+- [x] Search, sorting, and a response-details view with complete answers, labelled against the version that specific response actually answered. ~~Filters~~ — a `from`/`to` date-range filter exists in the API but has no UI yet
+- [x] ~~Async~~ CSV export — a synchronous streamed download (fixed-size batches, flat memory use), not a background job. Deliberately not async and not `.xlsx`: see `PHASE_5D_RESPONSE_DASHBOARD.md` for why building real job infrastructure now would be solving a problem this app doesn't have yet, same reasoning as the deferred Redis rate-limit item
+- [x] Database indexes: `{formId, submittedAt, _id}` (replaces the plan's `formId + responseId` once cursor pagination's actual query shape was worked out — `_id` as a tiebreaker is what pagination needed) and `{respondentIdentityId, submittedAt}`
+- [x] Authorization check on every list/detail/export endpoint — ownership only, via the shared `getOwnedForm` helper; a form owned by someone else 404s exactly like a nonexistent one
+- [x] Account linking: creating an account with the same verified email links prior anonymous-to-Formora-but-verified submissions, in whichever order the two happen — `lib/account-linking.ts`, called from all three account-creation paths (password, magic link/Google, and the respondent-verification path itself). A "Your responses" page (`/my-responses`) shows only form name + date
+- [x] Per-form `allowResponseEditing` toggle (creator-controlled on/off) — now actually enforced (previously always-on regardless of the flag). Not done: tying it to `RespondentIdentity` re-verification for `verified_email` forms specifically — the edit token works the same for both access modes, by design (see `PHASE_5_PUBLIC_FORM_UX.md`)
 - [x] ~~`submittedAt`, `updatedAt`, `revisionNumber` recorded on every edit~~ — done as part of the edit token work above
 
-**Milestone:** creators can safely browse/export large response sets, and returning respondents can find and edit their own past answers.
+**Milestone met:** creators can see, search, sort, and export their responses, and returning respondents can find (`/my-responses`) and edit their own past answers. 13 new e2e tests. Deep reference: `PHASE_5D_RESPONSE_DASHBOARD.md`.
 
 ### Phase 5e — Verified-phone respondents (last, and optional)
 
