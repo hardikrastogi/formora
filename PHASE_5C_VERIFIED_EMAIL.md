@@ -222,7 +222,7 @@ A very small number of e2e test flakes were observed against Atlas (network roun
 
 - **No account linking.** `RespondentIdentity.linkedAccountId` exists on the model but is never set — that's Phase 5d, when a creator account registers the same verified email.
 - **No "Your responses" list for a respondent.** Nothing shown here surfaces past submissions back to the person who made them.
-- **No response editing.** A verified respondent cannot revisit or change a submission after submitting; `allowResponseEditing` is a 5d feature.
+- ~~No response editing.~~ Fixed shortly after this phase, for both access modes: a verified respondent can now revisit and change a submission via a per-submission edit token, the same mechanism `anyone`-mode respondents get. See `PHASE_5_PUBLIC_FORM_UX.md`. Still missing: a creator-facing on/off toggle for this (`allowResponseEditing` remains unused) and tying the edit itself to re-verifying the respondent's identity — both still 5d.
 - **No creator-facing indicator of *how many* people were emailed but never completed verification** (i.e., no funnel/drop-off visibility) — only completed verifications and submissions are stored.
 - **No phone verification.** That's Phase 5e, structurally similar (a `type: "phone"` on `RespondentIdentity`) but with SMS delivery instead of email.
 - **No UI to see or revoke an in-progress respondent session** from the creator's side.
