@@ -42,6 +42,7 @@ test.describe("Phase 5: public form page and editable responses", () => {
   }) => {
     await openNewBuilder(page, "edit-response");
     await page.getByRole("button", { name: "Add Text field" }).click();
+    await page.getByLabel("Allow respondents to edit their response after submitting").check();
     await page.getByRole("button", { name: "Publish" }).click();
     await expect(page.getByText(/^Live at/)).toBeVisible({ timeout: 10000 });
     const href = (await page.locator(".fb-publish-url a").getAttribute("href"))!;
@@ -106,6 +107,7 @@ test.describe("Phase 5: public form page and editable responses", () => {
   }) => {
     await openNewBuilder(page, "forged-edit");
     await page.getByRole("button", { name: "Add Text field" }).click();
+    await page.getByLabel("Allow respondents to edit their response after submitting").check();
     await page.getByRole("button", { name: "Publish" }).click();
     await expect(page.getByText(/^Live at/)).toBeVisible({ timeout: 10000 });
     const href = (await page.locator(".fb-publish-url a").getAttribute("href"))!;
@@ -154,6 +156,67 @@ test.describe("Phase 5: public form page and editable responses", () => {
       data: { submissionId, editToken, answers: { text_1: "after close" } },
     });
     expect(res.status()).toBe(410);
+    await visitor.close();
+  });
+
+  test("editing is off by default: no Edit button shown, and the update endpoint refuses even a valid token", async ({
+    page,
+    request,
+  }) => {
+    await openNewBuilder(page, "editing-off-default");
+    await page.getByRole("button", { name: "Add Text field" }).click();
+    // Deliberately not checking "Allow respondents to edit their response" — this form publishes with editing off.
+    await page.getByRole("button", { name: "Publish" }).click();
+    await expect(page.getByText(/^Live at/)).toBeVisible({ timeout: 10000 });
+    const href = (await page.locator(".fb-publish-url a").getAttribute("href"))!;
+    const slug = new URL(href, page.url()).pathname.split("/").pop()!;
+
+    const visitor = await page.context().browser()!.newContext();
+    const visitorPage = await visitor.newPage();
+    await visitorPage.goto(href);
+    await visitorPage.getByLabel("Text field").fill("only answer");
+    await visitorPage.getByRole("button", { name: "Submit" }).click();
+    await expect(visitorPage.getByText("Your submission has been recorded.")).toBeVisible();
+    await expect(visitorPage.getByRole("button", { name: "Edit your response" })).toHaveCount(0);
+
+    const stored = await visitorPage.evaluate(
+      (key) => window.localStorage.getItem(key),
+      `formora-submission:${slug}`,
+    );
+    const { submissionId, editToken } = JSON.parse(stored!);
+    // Even with a genuinely valid token, the server refuses — the toggle is
+    // enforced server-side, not just hidden in the UI.
+    const res = await request.post(`/api/forms/${slug}/submission/update`, {
+      data: { submissionId, editToken, answers: { text_1: "sneaky edit" } },
+    });
+    expect(res.status()).toBe(403);
+    await visitor.close();
+  });
+
+  test("turning editing off after the fact refuses further edits to already-submitted responses", async ({
+    page,
+  }) => {
+    await openNewBuilder(page, "editing-toggled-off");
+    await page.getByRole("button", { name: "Add Text field" }).click();
+    await page.getByLabel("Allow respondents to edit their response after submitting").check();
+    await page.getByRole("button", { name: "Publish" }).click();
+    await expect(page.getByText(/^Live at/)).toBeVisible({ timeout: 10000 });
+    const href = (await page.locator(".fb-publish-url a").getAttribute("href"))!;
+
+    const visitor = await page.context().browser()!.newContext();
+    const visitorPage = await visitor.newPage();
+    await visitorPage.goto(href);
+    await visitorPage.getByLabel("Text field").fill("first answer");
+    await visitorPage.getByRole("button", { name: "Submit" }).click();
+    await expect(visitorPage.getByRole("button", { name: "Edit your response" })).toBeVisible();
+
+    // Creator turns editing back off and republishes.
+    await page.getByLabel("Allow respondents to edit their response after submitting").uncheck();
+    await page.getByRole("button", { name: "Republish" }).click();
+    await expect(page.getByText(/^Live at/)).toBeVisible({ timeout: 10000 });
+
+    await visitorPage.reload();
+    await expect(visitorPage.getByRole("button", { name: "Edit your response" })).toHaveCount(0);
     await visitor.close();
   });
 

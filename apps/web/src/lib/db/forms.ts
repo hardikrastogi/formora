@@ -12,6 +12,7 @@ export interface PublishedForm {
   formId: string;
   accessMode: "anyone" | "verified_email";
   closesAt: string | null;
+  allowResponseEditing: boolean;
   definition: FormDefinition;
 }
 
@@ -46,6 +47,7 @@ async function fetchPublishedForm(slug: string): Promise<PublishedForm | null> {
     formId: String(form._id),
     accessMode: form.accessMode as "anyone" | "verified_email",
     closesAt: form.closesAt ? new Date(form.closesAt).toISOString() : null,
+    allowResponseEditing: Boolean(form.allowResponseEditing),
     definition: parsed.data,
   };
 }

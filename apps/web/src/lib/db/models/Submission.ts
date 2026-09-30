@@ -17,6 +17,11 @@ const SubmissionSchema = new Schema(
     // /api/forms/[slug]/submission/*. Nullable so old submissions from
     // before this field existed just can't be looked up or edited.
     editTokenHash: { type: String, default: null },
+    // A lowercased, space-joined copy of every string/number answer,
+    // recomputed on every submit and edit. Backs the response dashboard's
+    // search box — a plain substring match over one field, not a real search
+    // engine, but sized to how few responses one form realistically has.
+    searchText: { type: String, default: "" },
   },
   { timestamps: true },
 );
@@ -24,7 +29,12 @@ const SubmissionSchema = new Schema(
 // Retrying the same submission attempt (double-click, network retry) must
 // never create a second row for the same form.
 SubmissionSchema.index({ formId: 1, idempotencyKey: 1 }, { unique: true });
-SubmissionSchema.index({ formId: 1, submittedAt: -1 });
+// _id as a tiebreaker keeps cursor-based pagination stable even if two
+// submissions land in the exact same millisecond.
+SubmissionSchema.index({ formId: 1, submittedAt: -1, _id: -1 });
+// Powers "Your responses" (Phase 5d account linking) — every submission a
+// given verified identity ever made, across every form, newest first.
+SubmissionSchema.index({ respondentIdentityId: 1, submittedAt: -1 });
 
 export type SubmissionDoc = InferSchemaType<typeof SubmissionSchema>;
 

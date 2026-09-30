@@ -30,12 +30,14 @@ export function BuilderPage({
   initialClosesAt,
   initialMaxResponses,
   initialLimitOneResponsePerRespondent,
+  initialAllowResponseEditing,
 }: {
   formId: string;
   initialAccessMode: AccessMode;
   initialClosesAt: string | null;
   initialMaxResponses: number | null;
   initialLimitOneResponsePerRespondent: boolean;
+  initialAllowResponseEditing: boolean;
   initialDefinition: FormDefinition | null;
   initialPublished: PublishResult | null;
 }) {
@@ -49,6 +51,7 @@ export function BuilderPage({
     initialMaxResponses !== null ? String(initialMaxResponses) : "",
   );
   const [limitOnePerRespondent, setLimitOnePerRespondent] = useState(initialLimitOneResponsePerRespondent);
+  const [allowEditing, setAllowEditing] = useState(initialAllowResponseEditing);
   const definition = useMemo(
     () => initialDefinition ?? createBlankDefinition(formId, "My form"),
     [initialDefinition, formId],
@@ -78,6 +81,7 @@ export function BuilderPage({
         // mode — sending false otherwise keeps the checkbox's own state from
         // silently re-enabling something the server would reject anyway.
         limitOneResponsePerRespondent: accessMode === "verified_email" ? limitOnePerRespondent : false,
+        allowResponseEditing: allowEditing,
       }),
     });
     if (!res.ok) throw new Error(await errorMessage(res, "Could not publish this form. Please try again."));
@@ -182,6 +186,15 @@ export function BuilderPage({
         {accessMode !== "verified_email" ? (
           <span className="text-muted-foreground">Requires &quot;Only people who verify their email&quot; above.</span>
         ) : null}
+      </div>
+      <div className="mb-3 flex items-center gap-2 text-sm">
+        <input
+          id="allow-editing"
+          type="checkbox"
+          checked={allowEditing}
+          onChange={(e) => setAllowEditing(e.target.checked)}
+        />
+        <label htmlFor="allow-editing">Allow respondents to edit their response after submitting</label>
       </div>
       <div className="min-h-0 flex-1">
         <Builder

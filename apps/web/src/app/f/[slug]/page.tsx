@@ -74,7 +74,7 @@ export default async function PublicFormPage({ params }: PageProps) {
           Email verified as <strong>{verifiedEmail}</strong>.
         </p>
       ) : null}
-      <PublicForm slug={slug} definition={published.definition} />
+      <PublicForm slug={slug} definition={published.definition} allowEditing={published.allowResponseEditing} />
     </div>
   );
 }
