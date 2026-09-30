@@ -23,7 +23,16 @@ export async function POST(request: Request) {
     slug: requestedSlug,
     accessMode,
     closesAt,
-  } = (body ?? {}) as { definition?: unknown; slug?: unknown; accessMode?: unknown; closesAt?: unknown };
+    maxResponses,
+    limitOneResponsePerRespondent,
+  } = (body ?? {}) as {
+    definition?: unknown;
+    slug?: unknown;
+    accessMode?: unknown;
+    closesAt?: unknown;
+    maxResponses?: unknown;
+    limitOneResponsePerRespondent?: unknown;
+  };
   if (accessMode !== undefined && accessMode !== "anyone" && accessMode !== "verified_email") {
     return NextResponse.json({ error: "accessMode must be 'anyone' or 'verified_email'." }, { status: 422 });
   }
@@ -43,6 +52,20 @@ export async function POST(request: Request) {
     } else {
       return NextResponse.json({ error: "closesAt must be a date string or null." }, { status: 422 });
     }
+  }
+  // Same null-clears/omit-keeps rule as closesAt.
+  let parsedMaxResponses: number | null | undefined;
+  if ("maxResponses" in (body as Record<string, unknown>)) {
+    if (maxResponses === null) {
+      parsedMaxResponses = null;
+    } else if (typeof maxResponses === "number" && Number.isInteger(maxResponses) && maxResponses > 0) {
+      parsedMaxResponses = maxResponses;
+    } else {
+      return NextResponse.json({ error: "maxResponses must be a positive whole number, or null." }, { status: 422 });
+    }
+  }
+  if (limitOneResponsePerRespondent !== undefined && typeof limitOneResponsePerRespondent !== "boolean") {
+    return NextResponse.json({ error: "limitOneResponsePerRespondent must be true or false." }, { status: 422 });
   }
   const parsed = FormDefinitionSchema.safeParse(definition);
   if (!parsed.success) {
@@ -77,6 +100,29 @@ export async function POST(request: Request) {
   // Left as-is when the caller doesn't say, so republishing never silently loosens who may respond.
   if (accessMode) form.accessMode = accessMode;
   if (parsedClosesAt !== undefined) form.closesAt = parsedClosesAt;
+  if (parsedMaxResponses !== undefined) form.maxResponses = parsedMaxResponses;
+
+  // limitOneResponsePerRespondent only means anything with a real identity to
+  // key on — enforcing it for anyone-mode would pretend to a guarantee
+  // anonymous submissions can't actually provide (see ROADMAP.md's own note
+  // on this). Checked against the *effective* access mode (the one just set,
+  // or the form's existing one if this call didn't change it).
+  const effectiveAccessMode = accessMode ?? form.accessMode;
+  if (limitOneResponsePerRespondent === true && effectiveAccessMode !== "verified_email") {
+    return NextResponse.json(
+      { error: "Limiting to one response per respondent requires the 'verified email' access mode." },
+      { status: 422 },
+    );
+  }
+  if (effectiveAccessMode !== "verified_email") {
+    // Force-clear rather than merely refuse to set: switching a form back to
+    // "anyone" must not leave a stale true value in place from when it used
+    // to be a verified_email form, which would otherwise silently pretend to
+    // still enforce a guarantee anonymous mode can't provide.
+    form.limitOneResponsePerRespondent = false;
+  } else if (limitOneResponsePerRespondent !== undefined) {
+    form.limitOneResponsePerRespondent = limitOneResponsePerRespondent;
+  }
 
   const version = await FormVersionModel.create({
     formId: form._id,
@@ -95,6 +141,8 @@ export async function POST(request: Request) {
       url: `/f/${form.slug}`,
       accessMode: form.accessMode,
       closesAt: form.closesAt ? form.closesAt.toISOString() : null,
+      maxResponses: form.maxResponses ?? null,
+      limitOneResponsePerRespondent: form.limitOneResponsePerRespondent,
     },
     { status: 200 },
   );

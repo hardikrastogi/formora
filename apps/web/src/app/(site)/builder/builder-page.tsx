@@ -28,10 +28,14 @@ export function BuilderPage({
   initialPublished,
   initialAccessMode,
   initialClosesAt,
+  initialMaxResponses,
+  initialLimitOneResponsePerRespondent,
 }: {
   formId: string;
   initialAccessMode: AccessMode;
   initialClosesAt: string | null;
+  initialMaxResponses: number | null;
+  initialLimitOneResponsePerRespondent: boolean;
   initialDefinition: FormDefinition | null;
   initialPublished: PublishResult | null;
 }) {
@@ -40,6 +44,11 @@ export function BuilderPage({
   // Empty string means "no close date". Kept as the datetime-local input's own
   // string format and converted to/from ISO only at the edges (load/publish).
   const [closesAtLocal, setClosesAtLocal] = useState(() => isoToLocalInput(initialClosesAt));
+  // Empty string means "no cap". Kept as the number input's own string form.
+  const [maxResponsesInput, setMaxResponsesInput] = useState(() =>
+    initialMaxResponses !== null ? String(initialMaxResponses) : "",
+  );
+  const [limitOnePerRespondent, setLimitOnePerRespondent] = useState(initialLimitOneResponsePerRespondent);
   const definition = useMemo(
     () => initialDefinition ?? createBlankDefinition(formId, "My form"),
     [initialDefinition, formId],
@@ -64,6 +73,11 @@ export function BuilderPage({
         definition: next,
         accessMode,
         closesAt: closesAtLocal ? new Date(closesAtLocal).toISOString() : null,
+        maxResponses: maxResponsesInput ? Number(maxResponsesInput) : null,
+        // Only meaningful (and only accepted by the server) in verified_email
+        // mode — sending false otherwise keeps the checkbox's own state from
+        // silently re-enabling something the server would reject anyway.
+        limitOneResponsePerRespondent: accessMode === "verified_email" ? limitOnePerRespondent : false,
       }),
     });
     if (!res.ok) throw new Error(await errorMessage(res, "Could not publish this form. Please try again."));
@@ -128,6 +142,46 @@ export function BuilderPage({
         ) : (
           <span className="text-muted-foreground">Leave blank for no expiry.</span>
         )}
+      </div>
+      <div className="mb-3 flex items-center gap-2 text-sm">
+        <label htmlFor="max-responses" className="font-medium">
+          Max responses
+        </label>
+        <input
+          id="max-responses"
+          type="number"
+          min={1}
+          step={1}
+          value={maxResponsesInput}
+          onChange={(e) => setMaxResponsesInput(e.target.value)}
+          className="w-24 rounded-md border bg-background px-2 py-1"
+        />
+        {maxResponsesInput ? (
+          <button
+            type="button"
+            onClick={() => setMaxResponsesInput("")}
+            className="text-muted-foreground underline hover:text-foreground"
+          >
+            Clear
+          </button>
+        ) : (
+          <span className="text-muted-foreground">Leave blank for no limit.</span>
+        )}
+      </div>
+      <div className="mb-3 flex items-center gap-2 text-sm">
+        <input
+          id="limit-one"
+          type="checkbox"
+          checked={accessMode === "verified_email" && limitOnePerRespondent}
+          disabled={accessMode !== "verified_email"}
+          onChange={(e) => setLimitOnePerRespondent(e.target.checked)}
+        />
+        <label htmlFor="limit-one" className={accessMode !== "verified_email" ? "text-muted-foreground" : undefined}>
+          Only one response per respondent
+        </label>
+        {accessMode !== "verified_email" ? (
+          <span className="text-muted-foreground">Requires &quot;Only people who verify their email&quot; above.</span>
+        ) : null}
       </div>
       <div className="min-h-0 flex-1">
         <Builder

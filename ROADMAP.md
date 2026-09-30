@@ -197,9 +197,9 @@ Tracked here so these gaps are fixed as the hosted product progresses. They are 
 
 #### Lower priority — complete as the related UI/operations work lands
 
-- [ ] **Health endpoint.** Add `/api/health` with a cheap liveness response and, if needed, a separately defined readiness check for dependencies such as MongoDB. Do not expose configuration, credentials, stack traces, database details, or user data
-- [ ] **`maxResponses` builder UI.** The submit route already enforces the cap, but creators can currently set it only by editing the database manually. Add, validate, save, display, and clear the setting through the builder
-- [ ] **`limitOneResponsePerRespondent` enforcement and UI.** Add the builder control and enforce it atomically. Define behavior separately for `verified_email` respondents and anonymous `anyone` forms so the setting does not pretend to provide identity guarantees that anonymous mode cannot support
+- [x] **Health endpoint.** `GET /api/health` — instant liveness, no dependencies, for cheap frequent pinging. `GET /api/ready` — a real MongoDB round trip (`admin().ping()`), 503 if unreachable; separated from liveness so a database outage actually shows as down instead of a liveness check staying green through it. Neither exposes configuration, connection strings, or stack traces — just up/down
+- [x] **`maxResponses` builder UI.** A "Max responses" number field in the builder, same set/keep/clear-via-publish pattern as `closesAt` (a positive integer sets it, `null` clears it, omitting the key keeps whatever the form already has). Rejects zero, negative, and non-integer values with `422`. Shown on the dashboard next to the live link
+- [x] **`limitOneResponsePerRespondent` enforcement and UI.** A checkbox in the builder, enabled only when access mode is "Only people who verify their email" — disabled (and visibly explained) otherwise, so the UI itself states the limitation rather than silently accepting a setting that can't do anything for anonymous forms. The publish route rejects `true` for an `anyone`-mode form with `422`, and force-clears the flag server-side (not just refuses to set it) if a form is switched back to `anyone` while it was still `true` from before, so a stale flag can never linger inconsistently. Enforced in the submit route by checking for an existing `Submission` with the same `respondentIdentityId`, returning `409` with a message pointing the respondent at editing their existing response (from the same browser) instead
 
 #### Other tracked product gaps
 
