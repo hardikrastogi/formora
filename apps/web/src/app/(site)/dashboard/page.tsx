@@ -105,6 +105,11 @@ export default async function DashboardPage() {
                 <p className="text-xs text-muted-foreground">
                   Edited {entry.updatedAt.toLocaleString("en-GB", { timeZone: "UTC" })} UTC
                 </p>
+                {entry.slug ? (
+                  <Link href={`/forms/${entry.slug}/responses`} className="text-xs underline">
+                    Responses
+                  </Link>
+                ) : null}
               </div>
               {entry.published && entry.slug ? (
                 <div className="text-right text-sm">
