@@ -240,4 +240,84 @@ test.describe("Phase 5b-2: password signup, login, and reset", () => {
     await page.goto(await latestLink(email));
     expect((await new AxeBuilder({ page }).analyze()).violations.map((v) => v.id)).toEqual([]);
   });
+
+  async function createVerifiedAccount(request: import("@playwright/test").APIRequestContext, password: string) {
+    const email = uniqueEmail("ratelimit");
+    const ip = { headers: { "x-forwarded-for": uniqueIp() } };
+    await request.post("/api/account/signup", { data: { email, password }, ...ip });
+    await request.post("/api/account/verify", { data: { token: tokenOf(await latestLink(email)) }, ...ip });
+    return email;
+  }
+
+  test("five wrong passwords lock out the email, and even the correct password is then refused", async ({
+    page,
+    request,
+  }) => {
+    const email = await createVerifiedAccount(request, "correct-horse-1");
+    const loginForm = page.getByRole("form", { name: "Log in with password" });
+    await page.goto("/signin");
+
+    for (let i = 0; i < 5; i++) {
+      await loginForm.getByLabel("Email address").fill(email);
+      await loginForm.getByLabel("Password").fill("wrong-password");
+      await loginForm.getByRole("button", { name: "Log in" }).click();
+      await expect(page.getByText(/Incorrect email or password\.|Too many attempts/)).toBeVisible();
+    }
+
+    await loginForm.getByLabel("Email address").fill(email);
+    await loginForm.getByLabel("Password").fill("correct-horse-1");
+    await loginForm.getByRole("button", { name: "Log in" }).click();
+    await expect(page.getByText("Too many attempts. Please wait a few minutes and try again.")).toBeVisible();
+    await expect(page).not.toHaveURL(/\/dashboard$/);
+  });
+
+  test("a nonexistent email is locked out identically to a real one, so the two can't be told apart", async ({
+    page,
+  }) => {
+    const email = uniqueEmail("never-signed-up");
+    const loginForm = page.getByRole("form", { name: "Log in with password" });
+    await page.goto("/signin");
+
+    for (let i = 0; i < 5; i++) {
+      await loginForm.getByLabel("Email address").fill(email);
+      await loginForm.getByLabel("Password").fill("anything-at-all");
+      await loginForm.getByRole("button", { name: "Log in" }).click();
+    }
+
+    await loginForm.getByLabel("Email address").fill(email);
+    await loginForm.getByLabel("Password").fill("anything-at-all");
+    await loginForm.getByRole("button", { name: "Log in" }).click();
+    await expect(page.getByText("Too many attempts. Please wait a few minutes and try again.")).toBeVisible();
+  });
+
+  test("one network address is locked out after enough failures across different emails", async ({
+    page,
+    context,
+  }) => {
+    const sharedIp = uniqueIp();
+    await context.setExtraHTTPHeaders({ "x-forwarded-for": sharedIp });
+    const loginForm = page.getByRole("form", { name: "Log in with password" });
+    await page.goto("/signin");
+
+    for (let i = 0; i < 20; i++) {
+      await loginForm.getByLabel("Email address").fill(uniqueEmail(`ipflood${i}`));
+      await loginForm.getByLabel("Password").fill("wrong");
+      await loginForm.getByRole("button", { name: "Log in" }).click();
+    }
+
+    await loginForm.getByLabel("Email address").fill(uniqueEmail("ipflood-final"));
+    await loginForm.getByLabel("Password").fill("wrong");
+    await loginForm.getByRole("button", { name: "Log in" }).click();
+    await expect(page.getByText("Too many attempts. Please wait a few minutes and try again.")).toBeVisible();
+  });
+
+  test("a correct password on the first try is never blocked", async ({ page, request }) => {
+    const email = await createVerifiedAccount(request, "correct-horse-1");
+    const loginForm = page.getByRole("form", { name: "Log in with password" });
+    await page.goto("/signin");
+    await loginForm.getByLabel("Email address").fill(email);
+    await loginForm.getByLabel("Password").fill("correct-horse-1");
+    await loginForm.getByRole("button", { name: "Log in" }).click();
+    await expect(page).toHaveURL(/\/dashboard$/);
+  });
 });
