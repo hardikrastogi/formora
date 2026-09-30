@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
-
-const MONGODB_URI = process.env.MONGODB_URI;
+import { getEnv } from "@/lib/env";
 
 // Cached on globalThis so Next.js's dev-mode hot reload doesn't open a
 // new connection on every file change.
@@ -16,11 +15,8 @@ const cache: MongooseCache = globalWithMongoose._mongooseCache ?? { conn: null, 
 globalWithMongoose._mongooseCache = cache;
 
 export async function connectToDatabase(): Promise<typeof mongoose> {
-  if (!MONGODB_URI) {
-    throw new Error("MONGODB_URI is not set. Add it to apps/web/.env.local (see .env.example).");
-  }
   if (cache.conn) return cache.conn;
-  cache.promise ??= mongoose.connect(MONGODB_URI);
+  cache.promise ??= mongoose.connect(getEnv().MONGODB_URI);
   cache.conn = await cache.promise;
   return cache.conn;
 }

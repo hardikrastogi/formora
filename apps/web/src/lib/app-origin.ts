@@ -1,3 +1,5 @@
+import { getEnv } from "@/lib/env";
+
 /**
  * The public address of this app, used to build links inside emails.
  *
@@ -10,12 +12,11 @@
  * In development only, it falls back to the request's own origin.
  */
 export function appOrigin(request: Request): string {
-  const explicit = process.env.APP_ORIGIN;
-  if (explicit) return explicit.replace(/\/+$/, "");
+  const env = getEnv();
+  if (env.APP_ORIGIN) return env.APP_ORIGIN.replace(/\/+$/, "");
 
-  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
-  if (vercel) return `https://${vercel}`;
+  if (env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`;
 
-  if (process.env.NODE_ENV !== "production") return new URL(request.url).origin;
+  if (env.NODE_ENV !== "production") return new URL(request.url).origin;
   throw new Error("APP_ORIGIN must be set in production (for example https://formora-web.vercel.app).");
 }

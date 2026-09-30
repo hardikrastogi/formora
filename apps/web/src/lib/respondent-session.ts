@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { getEnv } from "@/lib/env";
 
 /**
  * A respondent who verified their email gets a small signed cookie, one per
@@ -17,9 +18,7 @@ export function respondentCookieName(formId: string): string {
 
 // A key derived from AUTH_SECRET, so the raw secret is never used directly for two different jobs.
 function key(): Buffer {
-  const secret = process.env.AUTH_SECRET;
-  if (!secret) throw new Error("AUTH_SECRET is not set.");
-  return createHmac("sha256", secret).update("formora-respondent-session-v1").digest();
+  return createHmac("sha256", getEnv().AUTH_SECRET).update("formora-respondent-session-v1").digest();
 }
 
 function sign(payload: string): string {

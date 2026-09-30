@@ -4,11 +4,10 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import { GoogleButton } from "@/components/google-button";
+import { isGoogleConfigured } from "@/lib/env";
 import { SignupForm } from "./signup-form";
 
 export const metadata: Metadata = { title: "Sign up" };
-
-const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 
 export default async function SignUpPage({
   searchParams,
@@ -18,6 +17,7 @@ export default async function SignUpPage({
   const params = await searchParams;
   const next = safeRedirectPath(params.next ?? params.callbackUrl);
   if (await auth()) redirect(next);
+  const googleEnabled = isGoogleConfigured();
 
   return (
     <div className="mx-auto max-w-md px-4 py-16">

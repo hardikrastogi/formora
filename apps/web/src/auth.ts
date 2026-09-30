@@ -6,14 +6,11 @@ import { getMongoClient } from "@/lib/db/mongo-client";
 import { sendMagicLink } from "@/lib/auth/send-magic-link";
 import { findUserByEmail } from "@/lib/auth/users";
 import { verifyPassword } from "@/lib/auth/password";
-
-// Google is optional: only registered when both env vars are set, so a
-// deployment without Google OAuth configured doesn't crash `/signin` or the
-// build. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable it.
-const googleConfigured = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+import { getEnv, isGoogleConfigured } from "@/lib/env";
 
 // Passing a function makes Auth.js build its config lazily, per request, so
-// nothing tries to reach MongoDB while `next build` is collecting pages.
+// nothing tries to reach MongoDB — or validate env vars — while `next build`
+// is collecting pages.
 export const { handlers, auth, signIn, signOut } = NextAuth(() => ({
   adapter: MongoDBAdapter(getMongoClient()),
   // The Credentials provider cannot hand its sign-ins to the adapter (there is
@@ -67,11 +64,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => ({
     // so "same email" already means "same proven person" everywhere else in
     // this app (see upsertVerifiedPasswordUser). Without this flag, a creator
     // who signed up with a password could never also use Google on that email.
-    ...(googleConfigured
+    ...(isGoogleConfigured()
       ? [
           Google({
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            clientId: getEnv().GOOGLE_CLIENT_ID,
+            clientSecret: getEnv().GOOGLE_CLIENT_SECRET,
             allowDangerousEmailAccountLinking: true,
           }),
         ]
