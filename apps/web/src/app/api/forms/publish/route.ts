@@ -25,6 +25,7 @@ export async function POST(request: Request) {
     closesAt,
     maxResponses,
     limitOneResponsePerRespondent,
+    allowResponseEditing,
   } = (body ?? {}) as {
     definition?: unknown;
     slug?: unknown;
@@ -32,6 +33,7 @@ export async function POST(request: Request) {
     closesAt?: unknown;
     maxResponses?: unknown;
     limitOneResponsePerRespondent?: unknown;
+    allowResponseEditing?: unknown;
   };
   if (accessMode !== undefined && accessMode !== "anyone" && accessMode !== "verified_email") {
     return NextResponse.json({ error: "accessMode must be 'anyone' or 'verified_email'." }, { status: 422 });
@@ -67,6 +69,9 @@ export async function POST(request: Request) {
   if (limitOneResponsePerRespondent !== undefined && typeof limitOneResponsePerRespondent !== "boolean") {
     return NextResponse.json({ error: "limitOneResponsePerRespondent must be true or false." }, { status: 422 });
   }
+  if (allowResponseEditing !== undefined && typeof allowResponseEditing !== "boolean") {
+    return NextResponse.json({ error: "allowResponseEditing must be true or false." }, { status: 422 });
+  }
   const parsed = FormDefinitionSchema.safeParse(definition);
   if (!parsed.success) {
     return NextResponse.json(
@@ -101,6 +106,9 @@ export async function POST(request: Request) {
   if (accessMode) form.accessMode = accessMode;
   if (parsedClosesAt !== undefined) form.closesAt = parsedClosesAt;
   if (parsedMaxResponses !== undefined) form.maxResponses = parsedMaxResponses;
+  // No access-mode restriction here, unlike limitOneResponsePerRespondent — the
+  // edit-token mechanism works the same for anonymous and verified respondents.
+  if (allowResponseEditing !== undefined) form.allowResponseEditing = allowResponseEditing;
 
   // limitOneResponsePerRespondent only means anything with a real identity to
   // key on — enforcing it for anyone-mode would pretend to a guarantee
@@ -143,6 +151,7 @@ export async function POST(request: Request) {
       closesAt: form.closesAt ? form.closesAt.toISOString() : null,
       maxResponses: form.maxResponses ?? null,
       limitOneResponsePerRespondent: form.limitOneResponsePerRespondent,
+      allowResponseEditing: form.allowResponseEditing,
     },
     { status: 200 },
   );

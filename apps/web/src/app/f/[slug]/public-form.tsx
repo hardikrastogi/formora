@@ -43,7 +43,15 @@ type Status =
   | { kind: "submitted"; answers: Answers }
   | { kind: "editing"; answers: Answers };
 
-export function PublicForm({ slug, definition }: { slug: string; definition: FormDefinition }) {
+export function PublicForm({
+  slug,
+  definition,
+  allowEditing,
+}: {
+  slug: string;
+  definition: FormDefinition;
+  allowEditing: boolean;
+}) {
   const [status, setStatus] = useState<Status>({ kind: "checking" });
   const stored = useRef<StoredSubmission | null>(null);
   // One id per page load; reused on every retry so a double-click or a
@@ -91,13 +99,15 @@ export function PublicForm({ slug, definition }: { slug: string; definition: For
     return (
       <div className="df-form" role="status">
         <p>Your submission has been recorded.</p>
-        <button
-          type="button"
-          className="mt-3 text-sm underline"
-          onClick={() => setStatus({ kind: "editing", answers: status.answers })}
-        >
-          Edit your response
-        </button>
+        {allowEditing ? (
+          <button
+            type="button"
+            className="mt-3 text-sm underline"
+            onClick={() => setStatus({ kind: "editing", answers: status.answers })}
+          >
+            Edit your response
+          </button>
+        ) : null}
       </div>
     );
   }

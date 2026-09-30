@@ -30,6 +30,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     closesAt?: Date | null;
     maxResponses?: number | null;
     limitOneResponsePerRespondent?: boolean;
+    allowResponseEditing?: boolean;
   } | null>();
 
   return (
@@ -40,6 +41,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       initialClosesAt={form?.closesAt ? form.closesAt.toISOString() : null}
       initialMaxResponses={form?.maxResponses ?? null}
       initialLimitOneResponsePerRespondent={form?.limitOneResponsePerRespondent ?? false}
+      initialAllowResponseEditing={form?.allowResponseEditing ?? false}
       initialPublished={form?.published ? { url: `/f/${form.slug}`, slug: form.slug } : null}
     />
   );

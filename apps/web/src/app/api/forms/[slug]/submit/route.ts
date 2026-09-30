@@ -8,6 +8,7 @@ import { FormVersionModel } from "@/lib/db/models/FormVersion";
 import { SubmissionModel } from "@/lib/db/models/Submission";
 import { respondentCookieName, verifyRespondentToken } from "@/lib/respondent-session";
 import { hashToken, newToken } from "@/lib/respondent-verification";
+import { computeSearchText } from "@/lib/submission-search";
 
 const DUPLICATE_KEY_ERROR_CODE = 11000;
 
@@ -114,6 +115,7 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
       idempotencyKey,
       respondentIdentityId,
       editTokenHash: hashToken(editToken),
+      searchText: computeSearchText(answers as Record<string, unknown>),
     });
     return NextResponse.json({ submissionId: String(submission._id), editToken }, { status: 201 });
   } catch (error) {

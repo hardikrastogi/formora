@@ -6,6 +6,7 @@ import { FormModel } from "@/lib/db/models/Form";
 import { FormVersionModel } from "@/lib/db/models/FormVersion";
 import { SubmissionModel } from "@/lib/db/models/Submission";
 import { hashToken } from "@/lib/respondent-verification";
+import { computeSearchText } from "@/lib/submission-search";
 
 /**
  * A respondent revising their own earlier answer, proven by the edit token
@@ -45,6 +46,13 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
   if (form.closesAt && new Date() > form.closesAt) {
     return NextResponse.json({ error: "This form is closed." }, { status: 410 });
   }
+  // Phase 5d: editing is now the creator's choice per form (the builder's
+  // "Allow respondents to edit their response" checkbox), not always on.
+  // The edit token alone no longer implies permission — the form has to
+  // permit it too.
+  if (!form.allowResponseEditing) {
+    return NextResponse.json({ error: "The creator has turned off editing responses for this form." }, { status: 403 });
+  }
 
   const submission = await SubmissionModel.findOne({
     _id: submissionId,
@@ -66,6 +74,7 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
   }
 
   submission.answers = answers;
+  submission.searchText = computeSearchText(answers as Record<string, unknown>);
   submission.revisionNumber += 1;
   // The edit is now validated against, and counted as belonging to,
   // whichever version is live today — same as a fresh submission would be.
