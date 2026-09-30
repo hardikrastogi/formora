@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Builder, createBlankDefinition, type PublishResult } from "@hardikrastogi/builder";
 import "@hardikrastogi/builder/styles.css";
 import type { FormDefinition } from "@hardikrastogi/core";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export type AccessMode = "anyone" | "verified_email";
 
@@ -57,6 +59,14 @@ export function BuilderPage({
     [initialDefinition, formId],
   );
 
+  const settingsSummary = [
+    accessMode === "verified_email" ? "Verified email" : "Anyone with the link",
+    closesAtLocal ? "closes" : null,
+    maxResponsesInput ? `max ${maxResponsesInput}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   async function saveDraft(next: FormDefinition): Promise<void> {
     const res = await fetch(`/api/drafts/${encodeURIComponent(formId)}`, {
       method: "PUT",
@@ -96,105 +106,129 @@ export function BuilderPage({
   }
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-3.5rem)] max-w-6xl flex-col px-4 py-4">
-      <div className="flex items-baseline justify-between">
-        <h1 className="text-lg font-semibold">Builder</h1>
-        <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
-          All my forms
-        </Link>
-      </div>
-      <p className="mb-3 text-sm text-muted-foreground">
-        Drag fields from the palette, or click one to add it. Select a field to edit it on the right. Click Save to
-        keep your changes on your account; until then, this browser remembers them even if the tab closes or
-        refreshes, but a different browser or device won&apos;t see them. Publish to get a shareable link anyone can
-        fill out; Unpublish stops it accepting responses, and you can publish again any time.
-      </p>
-      <div className="mb-3 flex items-center gap-2 text-sm">
-        <label htmlFor="access-mode" className="font-medium">
-          Who can respond
-        </label>
-        <select
-          id="access-mode"
-          value={accessMode}
-          onChange={(e) => setAccessMode(e.target.value as AccessMode)}
-          className="rounded-md border bg-background px-2 py-1"
-        >
-          <option value="anyone">Anyone with the link</option>
-          <option value="verified_email">Only people who verify their email</option>
-        </select>
-        <span className="text-muted-foreground">Applies when you Publish or Republish.</span>
-      </div>
-      <div className="mb-3 flex items-center gap-2 text-sm">
-        <label htmlFor="closes-at" className="font-medium">
-          Closes
-        </label>
-        <input
-          id="closes-at"
-          type="datetime-local"
-          value={closesAtLocal}
-          onChange={(e) => setClosesAtLocal(e.target.value)}
-          className="rounded-md border bg-background px-2 py-1"
-        />
-        {closesAtLocal ? (
-          <button
-            type="button"
-            onClick={() => setClosesAtLocal("")}
-            className="text-muted-foreground underline hover:text-foreground"
-          >
-            Clear
-          </button>
-        ) : (
-          <span className="text-muted-foreground">Leave blank for no expiry.</span>
-        )}
-      </div>
-      <div className="mb-3 flex items-center gap-2 text-sm">
-        <label htmlFor="max-responses" className="font-medium">
-          Max responses
-        </label>
-        <input
-          id="max-responses"
-          type="number"
-          min={1}
-          step={1}
-          value={maxResponsesInput}
-          onChange={(e) => setMaxResponsesInput(e.target.value)}
-          className="w-24 rounded-md border bg-background px-2 py-1"
-        />
-        {maxResponsesInput ? (
-          <button
-            type="button"
-            onClick={() => setMaxResponsesInput("")}
-            className="text-muted-foreground underline hover:text-foreground"
-          >
-            Clear
-          </button>
-        ) : (
-          <span className="text-muted-foreground">Leave blank for no limit.</span>
-        )}
-      </div>
-      <div className="mb-3 flex items-center gap-2 text-sm">
-        <input
-          id="limit-one"
-          type="checkbox"
-          checked={accessMode === "verified_email" && limitOnePerRespondent}
-          disabled={accessMode !== "verified_email"}
-          onChange={(e) => setLimitOnePerRespondent(e.target.checked)}
-        />
-        <label htmlFor="limit-one" className={accessMode !== "verified_email" ? "text-muted-foreground" : undefined}>
-          Only one response per respondent
-        </label>
-        {accessMode !== "verified_email" ? (
-          <span className="text-muted-foreground">Requires &quot;Only people who verify their email&quot; above.</span>
-        ) : null}
-      </div>
-      <div className="mb-3 flex items-center gap-2 text-sm">
-        <input
-          id="allow-editing"
-          type="checkbox"
-          checked={allowEditing}
-          onChange={(e) => setAllowEditing(e.target.checked)}
-        />
-        <label htmlFor="allow-editing">Allow respondents to edit their response after submitting</label>
+    <div className="mx-auto flex h-[calc(100vh-3.5rem)] max-w-6xl flex-col px-4 py-3">
+      <div className="mb-2 flex items-center justify-between gap-3 border-b pb-3">
+        <div>
+          <h1 className="text-lg font-semibold">Builder</h1>
+          <p className="text-xs text-muted-foreground">Drag fields onto the canvas, or click one to add it.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Dialog>
+            <DialogTrigger className={buttonVariants({ variant: "outline", size: "sm" })}>
+              Settings{settingsSummary ? <span className="text-muted-foreground"> · {settingsSummary}</span> : null}
+            </DialogTrigger>
+            <DialogContent>
+              <DialogTitle>Form settings</DialogTitle>
+              <div className="mt-4 space-y-4 text-sm">
+                <div>
+                  <label htmlFor="access-mode" className="mb-1 block font-medium">
+                    Who can respond
+                  </label>
+                  <select
+                    id="access-mode"
+                    value={accessMode}
+                    onChange={(e) => setAccessMode(e.target.value as AccessMode)}
+                    className="w-full rounded-md border bg-background px-2 py-1.5"
+                  >
+                    <option value="anyone">Anyone with the link</option>
+                    <option value="verified_email">Only people who verify their email</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="closes-at" className="mb-1 block font-medium">
+                    Closes
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="closes-at"
+                      type="datetime-local"
+                      value={closesAtLocal}
+                      onChange={(e) => setClosesAtLocal(e.target.value)}
+                      className="w-full rounded-md border bg-background px-2 py-1.5"
+                    />
+                    {closesAtLocal ? (
+                      <button
+                        type="button"
+                        onClick={() => setClosesAtLocal("")}
+                        className="shrink-0 text-muted-foreground underline hover:text-foreground"
+                      >
+                        Clear
+                      </button>
+                    ) : null}
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">Leave blank for no expiry.</p>
+                </div>
+
+                <div>
+                  <label htmlFor="max-responses" className="mb-1 block font-medium">
+                    Max responses
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="max-responses"
+                      type="number"
+                      min={1}
+                      step={1}
+                      value={maxResponsesInput}
+                      onChange={(e) => setMaxResponsesInput(e.target.value)}
+                      className="w-24 rounded-md border bg-background px-2 py-1.5"
+                    />
+                    {maxResponsesInput ? (
+                      <button
+                        type="button"
+                        onClick={() => setMaxResponsesInput("")}
+                        className="text-muted-foreground underline hover:text-foreground"
+                      >
+                        Clear
+                      </button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Leave blank for no limit.</span>
+                    )}
+                  </div>
+                </div>
+
+                <label
+                  htmlFor="limit-one"
+                  className={`flex items-start gap-2 ${accessMode !== "verified_email" ? "text-muted-foreground" : ""}`}
+                >
+                  <input
+                    id="limit-one"
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={accessMode === "verified_email" && limitOnePerRespondent}
+                    disabled={accessMode !== "verified_email"}
+                    onChange={(e) => setLimitOnePerRespondent(e.target.checked)}
+                  />
+                  <span>
+                    Only one response per respondent
+                    {accessMode !== "verified_email" ? (
+                      <span className="block text-xs">Requires &quot;verify their email&quot; above.</span>
+                    ) : null}
+                  </span>
+                </label>
+
+                <label htmlFor="allow-editing" className="flex items-start gap-2">
+                  <input
+                    id="allow-editing"
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={allowEditing}
+                    onChange={(e) => setAllowEditing(e.target.checked)}
+                  />
+                  <span>Allow respondents to edit their response after submitting</span>
+                </label>
+              </div>
+              <div className="mt-4 flex items-center justify-between border-t pt-3">
+                <p className="text-xs text-muted-foreground">Applies when you Publish or Republish.</p>
+                <DialogClose render={<Button size="sm">Done</Button>} />
+              </div>
+            </DialogContent>
+          </Dialog>
+          <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
+            All my forms
+          </Link>
+        </div>
       </div>
       <div className="min-h-0 flex-1">
         <Builder

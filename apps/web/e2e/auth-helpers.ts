@@ -63,6 +63,24 @@ export async function openNewBuilder(page: Page, name = "builder"): Promise<void
   await page.waitForSelector(".fb-root");
 }
 
+/**
+ * The builder's "Who can respond"/"Closes"/"Max responses"/etc. fields live
+ * inside a modal Settings dialog, which unmounts its content while closed —
+ * so any test touching one of those fields must open it first. It's modal
+ * (a backdrop, not an auto-dismissing popover) specifically because an
+ * earlier popover version visually overlapped the Builder's own Publish
+ * button and blocked clicking it — a real usability bug, not just a test
+ * artifact. Call closeBuilderSettings before interacting with anything
+ * else on the page (Publish, Add field, etc.) while it might still be open.
+ */
+export async function openBuilderSettings(page: Page): Promise<void> {
+  await page.getByRole("button", { name: /^Settings/ }).click();
+}
+
+export async function closeBuilderSettings(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Done" }).click();
+}
+
 /** Runs a callback against the same database the server uses (for setting up or inspecting state). */
 export async function withDb<T>(fn: (db: Db) => Promise<T>): Promise<T> {
   const client = await new MongoClient(mongoUri()).connect();

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { openNewBuilder, withDb } from "./auth-helpers";
+import { closeBuilderSettings, openBuilderSettings, openNewBuilder, withDb } from "./auth-helpers";
 
 const STAMP = "2026-01-01T00:00:00.000Z";
 
@@ -112,12 +112,16 @@ test.describe("Phase 5: form close date", () => {
     const future = new Date(Date.now() + 2 * 60 * 60 * 1000);
     const pad = (n: number) => String(n).padStart(2, "0");
     const localValue = `${future.getFullYear()}-${pad(future.getMonth() + 1)}-${pad(future.getDate())}T${pad(future.getHours())}:${pad(future.getMinutes())}`;
+    await openBuilderSettings(page);
     await page.getByLabel("Closes").fill(localValue);
+    await closeBuilderSettings(page);
     await page.getByRole("button", { name: "Publish" }).click();
     await expect(page.getByText(/^Live at/)).toBeVisible({ timeout: 10000 });
 
     await page.reload();
+    await openBuilderSettings(page);
     await expect(page.getByLabel("Closes")).toHaveValue(localValue);
+    await closeBuilderSettings(page);
 
     await page.goto("/dashboard");
     await expect(page.getByText(/Closes \d/)).toBeVisible();
@@ -126,7 +130,9 @@ test.describe("Phase 5: form close date", () => {
     // (not goBack) so the builder's state is freshly mounted from the server,
     // not a soft-navigated instance that might hold a stale onPublish closure.
     await page.goto(builderUrl);
+    await openBuilderSettings(page);
     await page.getByRole("button", { name: "Clear" }).click();
+    await closeBuilderSettings(page);
     // Explicitly wait for the publish response, not just the UI settling — the definition
     // is unchanged on this republish (only closesAt), which made the "Live at" text update
     // race ahead of the request actually completing.
@@ -137,6 +143,7 @@ test.describe("Phase 5: form close date", () => {
     expect((await republish).ok()).toBe(true);
     await expect(page.getByText(/^Live at/)).toBeVisible({ timeout: 10000 });
     await page.reload();
+    await openBuilderSettings(page);
     await expect(page.getByLabel("Closes")).toHaveValue("");
   });
 });
