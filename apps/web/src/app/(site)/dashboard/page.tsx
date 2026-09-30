@@ -20,6 +20,7 @@ interface Entry {
   published: boolean;
   accessMode?: "anyone" | "verified_email";
   closesAt?: Date | null;
+  maxResponses?: number | null;
 }
 
 export default async function DashboardPage() {
@@ -63,6 +64,7 @@ export default async function DashboardPage() {
       existing.published = f.published;
       existing.accessMode = f.accessMode;
       existing.closesAt = f.closesAt;
+      existing.maxResponses = f.maxResponses;
     } else {
       bySlug.set(f.slug, {
         id: f.slug,
@@ -72,6 +74,7 @@ export default async function DashboardPage() {
         published: f.published,
         accessMode: f.accessMode,
         closesAt: f.closesAt,
+        maxResponses: f.maxResponses,
       });
     }
   }
@@ -113,6 +116,9 @@ export default async function DashboardPage() {
                       {entry.closesAt.getTime() < now ? "Closed " : "Closes "}
                       {entry.closesAt.toLocaleString("en-GB", { timeZone: "UTC" })} UTC
                     </p>
+                  ) : null}
+                  {entry.maxResponses ? (
+                    <p className="text-xs text-muted-foreground">Max {entry.maxResponses} responses</p>
                   ) : null}
                 </div>
               ) : (

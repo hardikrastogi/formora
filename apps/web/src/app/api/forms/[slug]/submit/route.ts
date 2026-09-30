@@ -55,6 +55,23 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
         { status: 401 },
       );
     }
+
+    // Only meaningful with a real identity to key on — enforced at publish
+    // time that this flag can't be true for an "anyone" form (see publish
+    // route), so this branch is the only place it's ever checked.
+    if (form.limitOneResponsePerRespondent) {
+      const existing = await SubmissionModel.findOne({ formId: form._id, respondentIdentityId });
+      if (existing) {
+        return NextResponse.json(
+          {
+            error:
+              "You've already submitted a response to this form. If you still have the browser or device you used, you can edit your response there instead.",
+            code: "already_responded",
+          },
+          { status: 409 },
+        );
+      }
+    }
   }
 
   const version = await FormVersionModel.findById(form.currentVersionId);

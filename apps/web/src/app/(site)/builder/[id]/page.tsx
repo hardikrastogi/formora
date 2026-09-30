@@ -28,6 +28,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     published: boolean;
     accessMode?: "anyone" | "verified_email";
     closesAt?: Date | null;
+    maxResponses?: number | null;
+    limitOneResponsePerRespondent?: boolean;
   } | null>();
 
   return (
@@ -36,6 +38,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       initialDefinition={(draft?.definition as FormDefinition | undefined) ?? null}
       initialAccessMode={form?.accessMode ?? "anyone"}
       initialClosesAt={form?.closesAt ? form.closesAt.toISOString() : null}
+      initialMaxResponses={form?.maxResponses ?? null}
+      initialLimitOneResponsePerRespondent={form?.limitOneResponsePerRespondent ?? false}
       initialPublished={form?.published ? { url: `/f/${form.slug}`, slug: form.slug } : null}
     />
   );
