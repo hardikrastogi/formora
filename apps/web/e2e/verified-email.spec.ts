@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type APIRequestContext } from "@playwright/test";
-import { latestLink, openNewBuilder, signIn, uniqueEmail, withDb } from "./auth-helpers";
+import { closeBuilderSettings, latestLink, openBuilderSettings, openNewBuilder, signIn, uniqueEmail, withDb } from "./auth-helpers";
 
 // Just the part of Playwright's fixture these helpers use.
 type Playwright = { request: { newContext(options?: { baseURL?: string }): Promise<APIRequestContext> } };
@@ -363,7 +363,9 @@ test.describe("Phase 5c: verified-email respondents", () => {
     await openNewBuilder(page, "modeui");
     await page.getByLabel("Form name").fill("Chosen In Builder");
     await page.getByRole("button", { name: "Add Text field" }).click();
+    await openBuilderSettings(page);
     await page.getByLabel("Who can respond").selectOption("verified_email");
+    await closeBuilderSettings(page);
     await page.getByRole("button", { name: "Publish" }).click();
     await expect(page.getByText(/^Live at/)).toBeVisible({ timeout: 10000 });
     const href = (await page.locator(".fb-publish-url a").getAttribute("href"))!;
@@ -376,6 +378,7 @@ test.describe("Phase 5c: verified-email respondents", () => {
 
     // Reopening the builder remembers the choice.
     await page.reload();
+    await openBuilderSettings(page);
     await expect(page.getByLabel("Who can respond")).toHaveValue("verified_email");
   });
 

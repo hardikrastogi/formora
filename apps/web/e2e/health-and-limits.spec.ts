@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { latestLink, openNewBuilder, signIn, uniqueEmail, withDb } from "./auth-helpers";
+import { closeBuilderSettings, latestLink, openBuilderSettings, openNewBuilder, signIn, uniqueEmail, withDb } from "./auth-helpers";
 
 const STAMP = "2026-01-01T00:00:00.000Z";
 
@@ -158,6 +158,7 @@ test.describe("Phase 5 hardening: health endpoints, maxResponses, limitOneRespon
     await openNewBuilder(page, "limits-ui");
     await page.getByLabel("Form name").fill("Limits UI Test");
     await page.getByRole("button", { name: "Add Text field" }).click();
+    await openBuilderSettings(page);
 
     const checkbox = page.getByRole("checkbox", { name: "Only one response per respondent" });
     await expect(checkbox).toBeDisabled();
@@ -166,11 +167,13 @@ test.describe("Phase 5 hardening: health endpoints, maxResponses, limitOneRespon
     await expect(checkbox).toBeEnabled();
     await checkbox.check();
     await page.getByLabel("Max responses").fill("50");
+    await closeBuilderSettings(page);
 
     await page.getByRole("button", { name: "Publish" }).click();
     await expect(page.getByText(/^Live at/)).toBeVisible({ timeout: 10000 });
 
     await page.reload();
+    await openBuilderSettings(page);
     await expect(page.getByLabel("Max responses")).toHaveValue("50");
     await expect(page.getByRole("checkbox", { name: "Only one response per respondent" })).toBeChecked();
 

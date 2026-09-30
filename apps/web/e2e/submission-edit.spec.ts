@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { openNewBuilder, withDb } from "./auth-helpers";
+import { closeBuilderSettings, openBuilderSettings, openNewBuilder, withDb } from "./auth-helpers";
 
 test.describe("Phase 5: public form page and editable responses", () => {
   test("a published form's public page has no site header, footer, or nav", async ({ page }) => {
@@ -42,7 +42,9 @@ test.describe("Phase 5: public form page and editable responses", () => {
   }) => {
     await openNewBuilder(page, "edit-response");
     await page.getByRole("button", { name: "Add Text field" }).click();
+    await openBuilderSettings(page);
     await page.getByLabel("Allow respondents to edit their response after submitting").check();
+    await closeBuilderSettings(page);
     await page.getByRole("button", { name: "Publish" }).click();
     await expect(page.getByText(/^Live at/)).toBeVisible({ timeout: 10000 });
     const href = (await page.locator(".fb-publish-url a").getAttribute("href"))!;
@@ -107,7 +109,9 @@ test.describe("Phase 5: public form page and editable responses", () => {
   }) => {
     await openNewBuilder(page, "forged-edit");
     await page.getByRole("button", { name: "Add Text field" }).click();
+    await openBuilderSettings(page);
     await page.getByLabel("Allow respondents to edit their response after submitting").check();
+    await closeBuilderSettings(page);
     await page.getByRole("button", { name: "Publish" }).click();
     await expect(page.getByText(/^Live at/)).toBeVisible({ timeout: 10000 });
     const href = (await page.locator(".fb-publish-url a").getAttribute("href"))!;
@@ -198,7 +202,9 @@ test.describe("Phase 5: public form page and editable responses", () => {
   }) => {
     await openNewBuilder(page, "editing-toggled-off");
     await page.getByRole("button", { name: "Add Text field" }).click();
+    await openBuilderSettings(page);
     await page.getByLabel("Allow respondents to edit their response after submitting").check();
+    await closeBuilderSettings(page);
     await page.getByRole("button", { name: "Publish" }).click();
     await expect(page.getByText(/^Live at/)).toBeVisible({ timeout: 10000 });
     const href = (await page.locator(".fb-publish-url a").getAttribute("href"))!;
@@ -211,7 +217,9 @@ test.describe("Phase 5: public form page and editable responses", () => {
     await expect(visitorPage.getByRole("button", { name: "Edit your response" })).toBeVisible();
 
     // Creator turns editing back off and republishes.
+    await openBuilderSettings(page);
     await page.getByLabel("Allow respondents to edit their response after submitting").uncheck();
+    await closeBuilderSettings(page);
     await page.getByRole("button", { name: "Republish" }).click();
     await expect(page.getByText(/^Live at/)).toBeVisible({ timeout: 10000 });
 
