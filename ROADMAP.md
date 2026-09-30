@@ -193,7 +193,7 @@ Tracked here so these gaps are fixed as the hosted product progresses. They are 
 #### Medium value — before real traffic
 
 - [ ] **Production error monitoring.** Add a service such as Sentry (free tier is sufficient initially), including server, route-handler, and client errors. Configure source maps and release/environment tags, and scrub form answers, emails, tokens, secrets, and other PII before events leave Formora
-- [ ] **Move distributed rate limits off Mongo document-count queries.** Replace per-email/per-IP `countDocuments` checks with atomic, expiring counters in Redis/Upstash/Vercel KV or an equivalent shared store before traffic scales. Preserve the current limits and fail safely if the rate-limit store is unavailable
+- [~] **Move distributed rate limits off Mongo document-count queries.** Deliberately deferred, not built: at Formora's current traffic, MongoDB's `countDocuments` checks are genuinely fast enough, and adding a Redis/Upstash dependency now would be solving a problem that doesn't exist yet. Revisit only if login attempts, signup/reset requests, or respondent verification requests are ever actually seen straining the database — not preemptively
 
 #### Lower priority — complete as the related UI/operations work lands
 
