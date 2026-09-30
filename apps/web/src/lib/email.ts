@@ -1,4 +1,5 @@
 import { getMongoClient } from "@/lib/db/mongo-client";
+import { getEnv } from "@/lib/env";
 
 /**
  * How emails leave the app. Chosen by EMAIL_TRANSPORT:
@@ -7,13 +8,11 @@ import { getMongoClient } from "@/lib/db/mongo-client";
  *              Local development only. Never set this on Vercel: anyone who
  *              can read the outbox or logs could sign in as anyone.
  *   "resend":  sends a real email through Resend's HTTP API.
- * With nothing set, development defaults to console and production refuses.
+ * With nothing set, development defaults to console; production is
+ * validated (and RESEND_API_KEY/EMAIL_FROM's presence checked) by lib/env.ts.
  */
 function transport(): "console" | "resend" {
-  const configured = process.env.EMAIL_TRANSPORT;
-  if (configured === "console" || configured === "resend") return configured;
-  if (process.env.NODE_ENV !== "production") return "console";
-  throw new Error("EMAIL_TRANSPORT must be set to 'resend' in production (see .env.example).");
+  return getEnv().EMAIL_TRANSPORT ?? "console";
 }
 
 export function escapeHtml(value: string): string {
@@ -50,11 +49,9 @@ export async function sendEmail(message: OutgoingEmail): Promise<void> {
     return;
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
-  if (!apiKey || !from) {
-    throw new Error("RESEND_API_KEY and EMAIL_FROM must be set when EMAIL_TRANSPORT=resend.");
-  }
+  // getEnv() already guarantees these are set whenever EMAIL_TRANSPORT is
+  // "resend" — see the superRefine in lib/env.ts.
+  const { RESEND_API_KEY: apiKey, EMAIL_FROM: from } = getEnv();
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
