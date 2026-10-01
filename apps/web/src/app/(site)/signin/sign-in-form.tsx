@@ -1,11 +1,15 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { requestLink, type SignInState } from "./actions";
 
 export function SignInForm({ next }: { next: string }) {
   const [state, action, pending] = useActionState<SignInState, FormData>(requestLink, { error: null });
+  // Controlled, not left to the DOM: React resets a form's uncontrolled
+  // fields once its action finishes, so after a failed attempt the email
+  // would otherwise vanish, forcing it to be retyped.
+  const [email, setEmail] = useState("");
 
   return (
     <form action={action} aria-label="Get a one-time link" className="mt-3 space-y-3">
@@ -19,6 +23,8 @@ export function SignInForm({ next }: { next: string }) {
         type="email"
         required
         autoComplete="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
         className="w-full rounded-md border bg-background px-3 py-2 text-sm"
       />
       {state.error ? (

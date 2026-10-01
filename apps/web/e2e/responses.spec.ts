@@ -54,6 +54,39 @@ test.describe("Phase 5d: response dashboard", () => {
     await expect(page.getByText("No responses match your search.")).toBeVisible();
   });
 
+  test("date-range filter narrows the list and is reflected in the URL", async ({ page }) => {
+    await signIn(page.request, uniqueEmail("respdates"));
+    const slug = uniqueId("respdates");
+    await page.request.post("/api/forms/publish", { data: { definition: definition(slug) } });
+    await submit(page.request, slug, "Today's response", "k1");
+
+    await page.goto(`/forms/${slug}/responses`);
+    await expect(page.getByText("1 response")).toBeVisible();
+
+    const today = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const isoDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+
+    // A "from" date after the only response's date excludes it.
+    await page.getByLabel("From date").fill(isoDate(tomorrow));
+    await expect(page.getByText("No responses match your filters.")).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`[?&]from=`));
+
+    // Widening the range back to include today shows it again.
+    await page.getByLabel("From date").fill(isoDate(yesterday));
+    await expect(page.locator("ul li")).toHaveCount(1);
+
+    // A "to" date before today also excludes it.
+    await page.getByLabel("To date").fill(isoDate(yesterday));
+    await expect(page.getByText("No responses match your filters.")).toBeVisible();
+
+    await page.getByRole("button", { name: "Clear dates" }).click();
+    await expect(page.locator("ul li")).toHaveCount(1);
+    await expect(page).not.toHaveURL(/[?&](from|to)=/);
+  });
+
   test("sort toggle flips the order", async ({ page }) => {
     await signIn(page.request, uniqueEmail("respsort"));
     const slug = uniqueId("respsort");

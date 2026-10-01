@@ -52,3 +52,14 @@ export async function upsertVerifiedPasswordUser(email: string, passwordHash: st
 export async function setUserPassword(email: string, passwordHash: string): Promise<void> {
   await (await users()).updateOne({ email }, { $set: { passwordHash } });
 }
+
+export async function clearUserPassword(userId: string): Promise<void> {
+  if (!ObjectId.isValid(userId)) return;
+  await (await users()).updateOne({ _id: new ObjectId(userId) }, { $unset: { passwordHash: "" } });
+}
+
+/** Used once a "change-email" token is confirmed — the new address has already been proven. */
+export async function setUserEmail(userId: string, newEmail: string): Promise<void> {
+  if (!ObjectId.isValid(userId)) return;
+  await (await users()).updateOne({ _id: new ObjectId(userId) }, { $set: { email: newEmail, emailVerified: new Date() } });
+}

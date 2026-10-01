@@ -9,12 +9,18 @@ import mongoose, { Schema, type InferSchemaType } from "mongoose";
  */
 const AccountVerificationTokenSchema = new Schema(
   {
-    purpose: { type: String, enum: ["signup", "reset"], required: true },
+    purpose: { type: String, enum: ["signup", "reset", "change-email"], required: true },
+    // For "signup"/"reset": the account's own email. For "change-email": the
+    // *new* address being proven, not the signed-in account's current one.
     email: { type: String, required: true },
     // For "signup" only: the password the person chose, already hashed. Copied
     // onto the user document only once the link is clicked, so an unverified
     // signup never creates or touches a real account.
     pendingPasswordHash: { type: String, default: null },
+    // For "change-email" only: which signed-in account requested the change,
+    // so clicking the link updates that account regardless of which browser
+    // or session the link is opened in.
+    userId: { type: String, default: null },
     tokenHash: { type: String, required: true, unique: true },
     expiresAt: { type: Date, required: true },
     usedAt: { type: Date, default: null },
