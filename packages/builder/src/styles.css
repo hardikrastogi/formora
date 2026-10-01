@@ -4,6 +4,7 @@
   --fb-bg: #ffffff;
   --fb-panel-bg: #f9fafb;
   --fb-primary: #2563eb;
+  --fb-primary-tint: #eef2ff;
   --fb-danger: #dc2626;
 
   display: flex;
@@ -76,6 +77,13 @@
   padding: 0.35rem 0.7rem;
   font-size: 0.85rem;
   cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+.fb-topbar-actions button:not(:disabled):hover {
+  background: var(--fb-primary-tint);
+  border-color: var(--fb-primary);
 }
 .fb-topbar-actions button:disabled {
   opacity: 0.5;
@@ -91,6 +99,12 @@
 .fb-mode-toggle button {
   border: 0;
   border-radius: 0;
+  background: var(--fb-bg);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.fb-mode-toggle button:hover:not([aria-pressed="true"]) {
+  background: var(--fb-primary-tint);
 }
 .fb-mode-toggle button[aria-pressed="true"] {
   background: var(--fb-primary);
