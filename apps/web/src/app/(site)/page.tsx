@@ -1,121 +1,42 @@
 import Link from "next/link";
-import { CodeBlock } from "@/components/code-block";
 import { buttonVariants } from "@/components/ui/button";
+import { cn } from "cn";
 
-const SNIPPET = `import { FormRenderer } from "@hardikrastogi/react";
-import "@hardikrastogi/react/styles.css";
-
-<FormRenderer
-  definition={definition}
-  onSubmit={(answers) => save(answers)}
-/>`;
-
-const FEATURES = [
-  {
-    title: "The JSON is the product",
-    body: "One FormDefinition describes fields, layout, theme and rules. The renderer, the validator and your storage all read the same document.",
-  },
-  {
-    title: "Tokens, not hex codes",
-    body: "A theme of colours, radius, font and density becomes CSS variables. Restyle every field at once, and override one field when you must.",
-  },
-  {
-    title: "Field types are plugins",
-    body: "Eight are built in. Register your own with a name, a schema and a component, then use it from JSON like any other.",
-  },
-  {
-    title: "Validated on both sides",
-    body: "The rules live in a UI-free package, so the exact checks the browser runs also run on your server.",
-  },
-];
-
-const STEPS = [
-  ["Describe", "Write a FormDefinition as JSON, or produce one from your own tools."],
-  ["Render", "Pass it to FormRenderer. Fields, grid, theme and validation come from the definition."],
-  ["Collect", "Receive clean answers plus the schema version, ready to store or send."],
-];
-
-// Placeholders only — the templates themselves are a later phase. Shown now
-// so a form-creator visitor (not just a developer integrating the library)
-// has something concrete to want on this page.
-const TEMPLATES = ["Resume", "Portfolio", "Invitation", "Event RSVP", "Job application", "Feedback"];
+const TITLE_WORDS = ["Forms", "as", "data."];
 
 export default function HomePage() {
   return (
-    <>
-      <section className="mx-auto max-w-6xl px-4 pb-12 pt-16 text-center md:pt-24">
+    <section className="relative flex min-h-[calc(100vh-3.5rem)] items-center justify-center overflow-hidden px-4 text-center">
+      <div aria-hidden="true" className="hero-dotgrid" />
+      <div className="relative z-10 mx-auto max-w-2xl">
         <p className="mb-3 text-sm font-medium text-muted-foreground">Open source · npm packages · any React app</p>
-        <h1 className="mx-auto max-w-3xl text-4xl font-bold tracking-tight md:text-6xl">Forms as data.</h1>
-        <p className="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground">
-          Describe a form as one JSON document. Formora validates it, renders it, themes it and checks the answers, so
-          you stop hand-building forms.
+        <h1 className="text-5xl font-bold tracking-tight md:text-7xl">
+          {TITLE_WORDS.map((word, i) => (
+            <span key={word} className="hero-word" style={{ animationDelay: `${i * 110}ms` }}>
+              {word}
+              {i < TITLE_WORDS.length - 1 ? " " : ""}
+            </span>
+          ))}
+        </h1>
+        <p
+          className="hero-word mx-auto mt-5 max-w-xl text-lg text-muted-foreground"
+          style={{ animationDelay: `${TITLE_WORDS.length * 110}ms` }}
+        >
+          Describe a form as one JSON document. Formora validates it, renders it, themes it, and checks the answers —
+          so you stop hand-building forms.
         </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link href="/playground" className={buttonVariants({ size: "lg" })}>
+        <div
+          className="hero-word mt-8 flex flex-wrap justify-center gap-3"
+          style={{ animationDelay: `${(TITLE_WORDS.length + 1) * 110}ms` }}
+        >
+          <Link href="/playground" className={cn(buttonVariants({ size: "lg" }), "cta-glow")}>
             Try the playground
           </Link>
           <Link href="/docs" className={buttonVariants({ size: "lg", variant: "outline" })}>
             Read the docs
           </Link>
         </div>
-      </section>
-
-      <section className="mx-auto max-w-2xl px-4 pb-16">
-        <CodeBlock title="Install" code={"npm install @hardikrastogi/core @hardikrastogi/react"} />
-        <CodeBlock title="Use" code={SNIPPET} />
-      </section>
-
-      <section className="border-y bg-muted/30 py-14">
-        <div className="mx-auto max-w-6xl px-4">
-          <h2 className="mb-2 text-center text-2xl font-bold tracking-tight">Start from a template</h2>
-          <p className="mx-auto mb-8 max-w-xl text-center text-sm text-muted-foreground">
-            Ready-made forms for common needs, coming soon. For now, sign up and build one from scratch.
-          </p>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
-            {TEMPLATES.map((t) => (
-              <div
-                key={t}
-                aria-disabled="true"
-                className="rounded-lg border border-dashed bg-background p-4 text-center text-sm text-muted-foreground"
-              >
-                {t}
-                <span className="mt-1 block text-xs">Coming soon</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="border-y bg-muted/30 py-14">
-        <div className="mx-auto max-w-6xl px-4">
-          <h2 className="mb-8 text-center text-2xl font-bold tracking-tight">How it works</h2>
-          <ol className="grid gap-6 md:grid-cols-3">
-            {STEPS.map(([title, body], i) => (
-              <li key={title} className="rounded-lg border bg-background p-5">
-                <span className="text-sm font-medium text-muted-foreground">Step {i + 1}</span>
-                <h3 className="mt-1 text-lg font-semibold">{title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{body}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-4 py-16">
-        <h2 className="mb-8 text-center text-2xl font-bold tracking-tight">Built to be depended on</h2>
-        <div className="grid gap-6 md:grid-cols-2">
-          {FEATURES.map((f) => (
-            <div key={f.title} className="rounded-lg border p-5">
-              <h3 className="font-semibold">{f.title}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{f.body}</p>
-            </div>
-          ))}
-        </div>
-        <p className="mx-auto mt-10 max-w-2xl text-center text-sm text-muted-foreground">
-          Formora is early and versioned 0.x. A drag-and-drop builder and hosted, shareable forms are planned next; the
-          packages you can use today are the schema and the renderer.
-        </p>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }
