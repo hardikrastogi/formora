@@ -223,7 +223,57 @@
   .cta-glow:focus-visible::before {
     animation: none;
   }
+  .pill-nav-indicator {
+    transition: none;
+  }
 }
+
+/* Header nav: a pill-shaped track with a sliding indicator behind whichever
+   link matches the current route (inspired by React Bits' Pill Nav). The
+   indicator only repositions on navigation, so plain transform/width
+   transitions are enough — no per-frame JS, no animation library. */
+.pill-nav {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.25rem;
+  border-radius: 9999px;
+  background: var(--secondary);
+}
+.pill-nav-indicator {
+  position: absolute;
+  top: 0.25rem;
+  bottom: 0.25rem;
+  left: 0;
+  border-radius: 9999px;
+  background: var(--background);
+  box-shadow: 0 1px 2px oklch(0 0 0 / 0.08);
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, width;
+}
+.pill-nav-item {
+  position: relative;
+  z-index: 1;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
+}
+.pill-nav-item:hover {
+  color: var(--foreground);
+  background: color-mix(in oklch, var(--foreground), transparent 94%);
+}
+.pill-nav-item[aria-current="page"] {
+  color: var(--foreground);
+  font-weight: 500;
+}
+
 .docs-prose {
   max-width: 46rem;
   line-height: 1.7;
