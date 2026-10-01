@@ -1,10 +1,18 @@
 .fb-root {
-  --fb-border: #d1d5db;
-  --fb-muted: #6b7280;
-  --fb-bg: #ffffff;
-  --fb-panel-bg: #f9fafb;
-  --fb-primary: #2563eb;
-  --fb-danger: #dc2626;
+  /* Dark, violet-tinted chrome matching the rest of Formora's own UI — the
+     aurora accent colour (violet) for primary actions/active states, a
+     near-black neutral everywhere else so the canvas stays readable. */
+  --fb-border: #3a3650;
+  --fb-muted: #9b96b0;
+  --fb-bg: #15131f;
+  --fb-panel-bg: #1c1a29;
+  --fb-primary: #a78bfa;
+  --fb-danger: #f87171;
+  --fb-text: #f1eef9;
+
+  /* Without this, native controls (inputs, selects, scrollbars) keep their
+     light default appearance regardless of the CSS variables above. */
+  color-scheme: dark;
 
   display: flex;
   flex-direction: column;
@@ -14,7 +22,7 @@
   border-radius: 8px;
   overflow: hidden;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  color: #111827;
+  color: var(--fb-text);
   background: var(--fb-bg);
 }
 
@@ -94,7 +102,7 @@
 }
 .fb-mode-toggle button[aria-pressed="true"] {
   background: var(--fb-primary);
-  color: white;
+  color: var(--fb-bg);
 }
 
 .fb-save-state {
@@ -144,6 +152,8 @@
   width: 100%;
   padding: 0.4rem 0.6rem;
   border: 1px solid var(--fb-border);
+  background: var(--fb-bg);
+  color: var(--fb-text);
   border-radius: 6px;
   margin-bottom: 0.75rem;
 }
@@ -269,6 +279,8 @@
 .fb-field select,
 .fb-field textarea {
   border: 1px solid var(--fb-border);
+  background: var(--fb-bg);
+  color: var(--fb-text);
   border-radius: 6px;
   padding: 0.4rem 0.5rem;
   font: inherit;
@@ -308,6 +320,8 @@
   flex: 1;
   min-width: 0;
   border: 1px solid var(--fb-border);
+  background: var(--fb-bg);
+  color: var(--fb-text);
   border-radius: 6px;
   padding: 0.35rem 0.45rem;
   font: inherit;
@@ -352,7 +366,7 @@
   border-bottom: 2px solid transparent;
 }
 .fb-tabs-trigger[data-state="active"] {
-  color: #111827;
+  color: var(--fb-text);
   border-bottom-color: var(--fb-primary);
   font-weight: 600;
 }
