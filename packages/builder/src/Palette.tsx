@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Command } from "cmdk";
 import { useDraggable } from "@dnd-kit/core";
 import { FIELD_CATALOG, FIELD_CATEGORIES } from "./field-catalog";
 import { useBuilder } from "./context";
@@ -14,51 +14,40 @@ function PaletteItem({ meta }: { meta: FieldTypeMeta }) {
   });
 
   return (
-    <button
+    <Command.Item
       ref={setNodeRef}
-      type="button"
+      value={meta.type}
+      keywords={[meta.label, meta.category]}
+      onSelect={() => addField(meta)}
       className="fb-palette-item"
       data-dragging={isDragging || undefined}
-      onClick={() => addField(meta)}
       aria-label={`Add ${meta.label} field`}
       {...attributes}
       {...listeners}
     >
       {meta.label}
-    </button>
+    </Command.Item>
   );
 }
 
+// A cmdk-powered palette: arrow keys highlight an item, Enter adds it, same
+// as clicking — on top of the drag-and-drop this already had. Kept docked in
+// the sidebar (not a popup) so the available fields stay visible at a glance,
+// which a modal command palette would hide behind a keystroke.
 export function Palette() {
-  const [query, setQuery] = useState("");
-  const q = query.trim().toLowerCase();
-  const filtered = q ? FIELD_CATALOG.filter((f) => f.label.toLowerCase().includes(q)) : FIELD_CATALOG;
-
   return (
-    <div className="fb-palette" aria-label="Field palette">
-      <input
-        type="search"
-        placeholder="Search fields"
-        aria-label="Search fields"
-        className="fb-palette-search"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
-      {FIELD_CATEGORIES.map((category) => {
-        const items = filtered.filter((f) => f.category === category);
-        if (items.length === 0) return null;
-        return (
-          <div key={category} className="fb-palette-group">
-            <h2 className="fb-palette-heading">{category}</h2>
-            <div className="fb-palette-grid">
-              {items.map((meta) => (
-                <PaletteItem key={meta.type} meta={meta} />
-              ))}
-            </div>
-          </div>
-        );
-      })}
-      {filtered.length === 0 && <p className="fb-palette-empty">No fields match &quot;{query}&quot;.</p>}
-    </div>
+    <Command className="fb-palette" label="Field palette" loop>
+      <Command.Input placeholder="Search fields" aria-label="Search fields" className="fb-palette-search" />
+      <Command.List className="fb-palette-list">
+        <Command.Empty className="fb-palette-empty">No fields match your search.</Command.Empty>
+        {FIELD_CATEGORIES.map((category) => (
+          <Command.Group key={category} heading={category} className="fb-palette-group">
+            {FIELD_CATALOG.filter((f) => f.category === category).map((meta) => (
+              <PaletteItem key={meta.type} meta={meta} />
+            ))}
+          </Command.Group>
+        ))}
+      </Command.List>
+    </Command>
   );
 }

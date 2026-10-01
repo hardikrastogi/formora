@@ -126,8 +126,8 @@ test.describe("Conditional logic: visibleIf and calculated fields", () => {
     page,
   }) => {
     await openNewBuilder(page, "logic-builder");
-    await page.getByRole("button", { name: "Add Checkbox field" }).click();
-    await page.getByRole("button", { name: "Add Text field" }).click();
+    await page.getByRole("option", { name: "Add Checkbox field" }).click();
+    await page.getByRole("option", { name: "Add Text field" }).click();
     await page.getByRole("tab", { name: "Basic" }).click();
     await page.getByLabel("Required").check();
     await page.getByRole("tab", { name: "Logic" }).click();

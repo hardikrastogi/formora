@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 
 interface FieldMeta {
   id: string;
@@ -266,10 +267,12 @@ export function ResponsesList({ slug }: { slug: string }) {
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm">{previewOf(response.answers, data.fields)}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(response.submittedAt).toLocaleString("en-GB", { timeZone: "UTC" })} UTC
-                    {response.verified ? " · verified email" : ""}
-                    {response.revisionNumber > 1 ? ` · edited (rev ${response.revisionNumber})` : ""}
+                  <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                    <span>{new Date(response.submittedAt).toLocaleString("en-GB", { timeZone: "UTC" })} UTC</span>
+                    {response.verified ? <Badge variant="secondary">verified email</Badge> : null}
+                    {response.revisionNumber > 1 ? (
+                      <Badge variant="outline">edited (rev {response.revisionNumber})</Badge>
+                    ) : null}
                   </p>
                 </div>
               </Link>

@@ -9,6 +9,7 @@ import { getUserId } from "@/lib/auth/session";
 import { slugify } from "@/lib/slug";
 import { currentTime } from "@/lib/now";
 import { buttonVariants } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = { title: "My forms" };
 
@@ -113,6 +114,12 @@ export default async function DashboardPage() {
               </div>
               {entry.published && entry.slug ? (
                 <div className="text-right text-sm">
+                  <div className="mb-1 flex justify-end gap-1">
+                    <Badge variant={entry.closesAt && entry.closesAt.getTime() < now ? "destructive" : "default"}>
+                      {entry.closesAt && entry.closesAt.getTime() < now ? "Closed" : "Published"}
+                    </Badge>
+                    {entry.accessMode === "verified_email" ? <Badge variant="secondary">Verified email</Badge> : null}
+                  </div>
                   <a href={`/f/${entry.slug}`} className="text-muted-foreground hover:text-foreground">
                     Live{entry.accessMode === "verified_email" ? " (verified email)" : ""}: /f/{entry.slug}
                   </a>
@@ -127,7 +134,7 @@ export default async function DashboardPage() {
                   ) : null}
                 </div>
               ) : (
-                <span className="text-sm text-muted-foreground">Not published</span>
+                <Badge variant="secondary">Not published</Badge>
               )}
             </li>
           ))}

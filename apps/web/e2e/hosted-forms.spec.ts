@@ -177,7 +177,7 @@ test.describe.serial("Phase 5a: builder UI publishes and shares a real link", ()
     await openNewBuilder(page, "ui");
 
     await page.getByLabel("Form name").fill("Builder UI Publish Test");
-    await page.getByRole("button", { name: "Add Text field" }).click();
+    await page.getByRole("option", { name: "Add Text field" }).click();
 
     await page.getByRole("button", { name: "Publish" }).click();
     await expect(page.getByText(/^Live at/)).toBeVisible({ timeout: 10000 });
@@ -195,7 +195,7 @@ test.describe.serial("Phase 5a: builder UI publishes and shares a real link", ()
     await openNewBuilder(page, "ui");
 
     await page.getByLabel("Form name").fill("Unpublish Flow Test");
-    await page.getByRole("button", { name: "Add Text field" }).click();
+    await page.getByRole("option", { name: "Add Text field" }).click();
     await page.getByRole("button", { name: "Publish" }).click();
     await expect(page.getByText(/^Live at/)).toBeVisible({ timeout: 10000 });
     const href = (await page.locator(".fb-publish-url a").getAttribute("href"))!;

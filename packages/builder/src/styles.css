@@ -150,19 +150,20 @@
 .fb-palette-group + .fb-palette-group {
   margin-top: 1rem;
 }
-.fb-palette-heading {
+.fb-palette-group [cmdk-group-heading] {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: var(--fb-muted);
   margin: 0 0 0.4rem;
 }
-.fb-palette-grid {
+.fb-palette-group [cmdk-group-items] {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.4rem;
 }
 .fb-palette-item {
+  display: block;
   border: 1px solid var(--fb-border);
   background: var(--fb-bg);
   border-radius: 6px;
@@ -170,6 +171,12 @@
   font-size: 0.85rem;
   text-align: left;
   cursor: grab;
+  outline: none;
+}
+.fb-palette-item[data-selected="true"] {
+  border-color: var(--fb-primary);
+  background: var(--fb-panel-bg);
+  box-shadow: 0 0 0 1px var(--fb-primary);
 }
 .fb-palette-item[data-dragging] {
   opacity: 0.5;

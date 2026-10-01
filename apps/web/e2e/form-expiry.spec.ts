@@ -107,7 +107,7 @@ test.describe("Phase 5: form close date", () => {
     // Publish sends whatever is currently in the editor directly — it does not
     // depend on a draft ever having been saved, so no Save click is needed here.
     await page.getByLabel("Form name").fill("Expiry UI Test");
-    await page.getByRole("button", { name: "Add Text field" }).click();
+    await page.getByRole("option", { name: "Add Text field" }).click();
 
     const future = new Date(Date.now() + 2 * 60 * 60 * 1000);
     const pad = (n: number) => String(n).padStart(2, "0");

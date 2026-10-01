@@ -228,7 +228,7 @@ test.describe("Phase 5d: response dashboard", () => {
 
   test("the dashboard links to a published form's responses", async ({ page }) => {
     await openNewBuilder(page, "resplink");
-    await page.getByRole("button", { name: "Add Text field" }).click();
+    await page.getByRole("option", { name: "Add Text field" }).click();
     await page.getByRole("button", { name: "Publish" }).click();
     await expect(page.getByText(/^Live at/)).toBeVisible({ timeout: 10000 });
 

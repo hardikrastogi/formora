@@ -23,16 +23,29 @@ describe("Builder", () => {
   it("clicking a palette item adds the field to the canvas and selects it", async () => {
     const user = userEvent.setup();
     renderBuilder();
-    await user.click(screen.getByRole("button", { name: "Add Text field" }));
+    await user.click(screen.getByRole("option", { name: "Add Text field" }));
 
     expect(screen.getByRole("button", { name: /^Text field/, pressed: true })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Basic" })).toBeInTheDocument();
   });
 
+  it("the palette is keyboard-navigable: typing filters it, arrow keys highlight an item, Enter adds it", async () => {
+    const user = userEvent.setup();
+    renderBuilder();
+
+    await user.type(screen.getByLabelText("Search fields"), "rating");
+    expect(screen.queryByRole("option", { name: "Add Text field" })).not.toBeInTheDocument();
+    const ratingItem = screen.getByRole("option", { name: "Add Rating field" });
+    expect(ratingItem).toHaveAttribute("data-selected", "true");
+
+    await user.keyboard("{Enter}");
+    expect(screen.getByRole("button", { name: /^Rating/, pressed: true })).toBeInTheDocument();
+  });
+
   it("editing the label in the Basic tab updates the field on the canvas", async () => {
     const user = userEvent.setup();
     renderBuilder();
-    await user.click(screen.getByRole("button", { name: "Add Text field" }));
+    await user.click(screen.getByRole("option", { name: "Add Text field" }));
 
     const labelInput = screen.getByLabelText("Label");
     await user.clear(labelInput);
@@ -44,7 +57,7 @@ describe("Builder", () => {
   it("marking a field required shows the asterisk on the canvas row", async () => {
     const user = userEvent.setup();
     renderBuilder();
-    await user.click(screen.getByRole("button", { name: "Add Text field" }));
+    await user.click(screen.getByRole("option", { name: "Add Text field" }));
     await user.click(screen.getByLabelText("Required"));
 
     const row = screen.getByRole("button", { name: /^Text field/, pressed: true });
@@ -54,17 +67,17 @@ describe("Builder", () => {
   it("the palette lists all five newly added field types under the right categories", () => {
     renderBuilder();
     for (const name of ["Website", "Country", "Currency", "Time", "Rating"]) {
-      expect(screen.getByRole("button", { name: `Add ${name} field` })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: `Add ${name} field` })).toBeInTheDocument();
     }
   });
 
   it("a rating field has no Placeholder input, but a country field has an Options editor", async () => {
     const user = userEvent.setup();
     renderBuilder();
-    await user.click(screen.getByRole("button", { name: "Add Rating field" }));
+    await user.click(screen.getByRole("option", { name: "Add Rating field" }));
     expect(screen.queryByLabelText("Placeholder")).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Add Country field" }));
+    await user.click(screen.getByRole("option", { name: "Add Country field" }));
     expect(screen.getByLabelText("Placeholder")).toBeInTheDocument();
     expect(screen.getByLabelText("Options (one per line)")).toBeInTheDocument();
   });
@@ -72,11 +85,11 @@ describe("Builder", () => {
   it("the Validation tab shows length fields for text and range fields for number", async () => {
     const user = userEvent.setup();
     renderBuilder();
-    await user.click(screen.getByRole("button", { name: "Add Text field" }));
+    await user.click(screen.getByRole("option", { name: "Add Text field" }));
     await user.click(screen.getByRole("tab", { name: "Validation" }));
     expect(screen.getByLabelText("Minimum length")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Add Number field" }));
+    await user.click(screen.getByRole("option", { name: "Add Number field" }));
     await user.click(screen.getByRole("tab", { name: "Validation" }));
     expect(screen.getByLabelText("Minimum value")).toBeInTheDocument();
   });
@@ -84,8 +97,8 @@ describe("Builder", () => {
   it("Logic tab: enabling conditional visibility defaults to a condition on the other field, editable and removable", async () => {
     const user = userEvent.setup();
     renderBuilder("logic_visibility");
-    await user.click(screen.getByRole("button", { name: "Add Checkbox field" }));
-    await user.click(screen.getByRole("button", { name: "Add Text field" }));
+    await user.click(screen.getByRole("option", { name: "Add Checkbox field" }));
+    await user.click(screen.getByRole("option", { name: "Add Text field" }));
     // The just-added Text field is already selected.
     await user.click(screen.getByRole("tab", { name: "Logic" }));
 
@@ -120,7 +133,7 @@ describe("Builder", () => {
   it("Logic tab: the visibility toggle is disabled with nothing else on the form to reference", async () => {
     const user = userEvent.setup();
     renderBuilder();
-    await user.click(screen.getByRole("button", { name: "Add Text field" }));
+    await user.click(screen.getByRole("option", { name: "Add Text field" }));
     await user.click(screen.getByRole("tab", { name: "Logic" }));
     expect(screen.getByRole("checkbox", { name: "Only show this field conditionally" })).toBeDisabled();
     expect(screen.getByText(/Add another field first/)).toBeInTheDocument();
@@ -129,15 +142,15 @@ describe("Builder", () => {
   it("Logic tab: calculated value composes a formula from inserted fields and saves it", async () => {
     const user = userEvent.setup();
     renderBuilder("logic_calculated");
-    await user.click(screen.getByRole("button", { name: "Add Number field" }));
+    await user.click(screen.getByRole("option", { name: "Add Number field" }));
     await user.clear(screen.getByLabelText("Label"));
     await user.type(screen.getByLabelText("Label"), "Seats");
 
-    await user.click(screen.getByRole("button", { name: "Add Number field" }));
+    await user.click(screen.getByRole("option", { name: "Add Number field" }));
     await user.clear(screen.getByLabelText("Label"));
     await user.type(screen.getByLabelText("Label"), "Price per seat");
 
-    await user.click(screen.getByRole("button", { name: "Add Number field" }));
+    await user.click(screen.getByRole("option", { name: "Add Number field" }));
     await user.clear(screen.getByLabelText("Label"));
     await user.type(screen.getByLabelText("Label"), "Total");
     // "Total" (number_3) is already selected after being added.
@@ -169,7 +182,7 @@ describe("Builder", () => {
   it("deleting a field removes it from the canvas and clears the selection", async () => {
     const user = userEvent.setup();
     renderBuilder();
-    await user.click(screen.getByRole("button", { name: "Add Text field" }));
+    await user.click(screen.getByRole("option", { name: "Add Text field" }));
     await user.click(screen.getByRole("button", { name: "Delete Text field" }));
 
     expect(screen.getByText(/Drag a field here/)).toBeInTheDocument();
@@ -179,7 +192,7 @@ describe("Builder", () => {
   it("Undo removes the last added field and Redo brings it back", async () => {
     const user = userEvent.setup();
     renderBuilder();
-    await user.click(screen.getByRole("button", { name: "Add Text field" }));
+    await user.click(screen.getByRole("option", { name: "Add Text field" }));
     expect(screen.getByRole("button", { name: "Undo" })).toBeEnabled();
 
     await user.click(screen.getByRole("button", { name: "Undo" }));
@@ -199,7 +212,7 @@ describe("Builder", () => {
   it("switching to Preview renders a real, working form and hides the palette", async () => {
     const user = userEvent.setup();
     renderBuilder();
-    await user.click(screen.getByRole("button", { name: "Add Email field" }));
+    await user.click(screen.getByRole("option", { name: "Add Email field" }));
     await user.click(screen.getByLabelText("Required"));
     await user.click(screen.getByRole("button", { name: "Preview" }));
 
@@ -213,7 +226,7 @@ describe("Builder", () => {
   it("the Theme button and clicking empty canvas space both deselect the current field", async () => {
     const user = userEvent.setup();
     renderBuilder();
-    await user.click(screen.getByRole("button", { name: "Add Text field" }));
+    await user.click(screen.getByRole("option", { name: "Add Text field" }));
     expect(screen.getByRole("tab", { name: "Basic" })).toBeInTheDocument();
 
     const themeButton = screen.getByRole("button", { name: "Theme" });
@@ -245,7 +258,7 @@ describe("Builder", () => {
     const user = userEvent.setup();
     renderBuilder("autosave_form");
 
-    await user.click(screen.getByRole("button", { name: "Add Text field" }));
+    await user.click(screen.getByRole("option", { name: "Add Text field" }));
     expect(screen.getByText("Saving…")).toBeInTheDocument();
 
     await waitFor(
@@ -264,7 +277,7 @@ describe("Builder", () => {
     render(<Builder initialDefinition={createBlankDefinition("host_saved", "My form")} onSave={onSave} />);
 
     expect(screen.getByText("Saved")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Add Text field" }));
+    await user.click(screen.getByRole("option", { name: "Add Text field" }));
     expect(await screen.findByText("Unsaved changes")).toBeInTheDocument();
     expect(onSave).not.toHaveBeenCalled();
 
@@ -274,7 +287,7 @@ describe("Builder", () => {
     expect(await screen.findByText("Saved")).toBeInTheDocument();
 
     // Editing again after a save goes back to pending, not silently "Saved".
-    await user.click(screen.getByRole("button", { name: "Add Email field" }));
+    await user.click(screen.getByRole("option", { name: "Add Email field" }));
     expect(await screen.findByText("Unsaved changes")).toBeInTheDocument();
   });
 
@@ -286,7 +299,7 @@ describe("Builder", () => {
       .mockResolvedValue(undefined);
     render(<Builder initialDefinition={createBlankDefinition("host_fail", "My form")} onSave={onSave} />);
 
-    await user.click(screen.getByRole("button", { name: "Add Text field" }));
+    await user.click(screen.getByRole("option", { name: "Add Text field" }));
     await user.click(screen.getByRole("button", { name: "Save" }));
     expect(await screen.findByText("Could not save")).toBeInTheDocument();
 
@@ -300,7 +313,7 @@ describe("Builder", () => {
     const onSave = vi.fn(async (_definition: FormDefinition) => {});
     render(<Builder initialDefinition={createBlankDefinition("host_backup", "My form")} onSave={onSave} />);
 
-    await user.click(screen.getByRole("button", { name: "Add Text field" }));
+    await user.click(screen.getByRole("option", { name: "Add Text field" }));
     await waitFor(() => {
       const stored = JSON.parse(window.localStorage.getItem("formora-builder:host_backup") ?? "null");
       expect(stored?.fields).toHaveLength(1);
@@ -315,7 +328,7 @@ describe("Builder", () => {
     const { unmount } = render(
       <Builder initialDefinition={createBlankDefinition("host_resume", "My form")} onSave={onSave} />,
     );
-    await user.click(screen.getByRole("button", { name: "Add Text field" }));
+    await user.click(screen.getByRole("option", { name: "Add Text field" }));
     await waitFor(() => {
       expect(JSON.parse(window.localStorage.getItem("formora-builder:host_resume") ?? "null")?.fields).toHaveLength(
         1,
@@ -501,7 +514,7 @@ describe("Builder", () => {
   it("two Builder instances with different ids keep separate state and storage", async () => {
     const user = userEvent.setup();
     const { unmount } = render(<Builder initialDefinition={createBlankDefinition("form_a", "A")} />);
-    await user.click(screen.getByRole("button", { name: "Add Text field" }));
+    await user.click(screen.getByRole("option", { name: "Add Text field" }));
     unmount();
 
     render(<Builder initialDefinition={createBlankDefinition("form_b", "B")} />);
