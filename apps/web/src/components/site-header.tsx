@@ -16,7 +16,7 @@ export function SiteHeader() {
         <Link href="/" className="text-lg font-bold tracking-tight">
           Formora
         </Link>
-        <nav aria-label="Main" className="flex items-center gap-5 text-sm">
+        <nav aria-label="Main" className="flex min-w-0 items-center gap-5 text-sm">
           <AuthNav />
         </nav>
       </div>

@@ -33,6 +33,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+  min-width: 0;
 }
 
 .fb-publish-error {
@@ -57,7 +58,8 @@
   background: transparent;
   padding: 0.3rem 0.5rem;
   border-radius: 6px;
-  min-width: 10rem;
+  min-width: 6rem;
+  flex-shrink: 1;
 }
 .fb-form-name:hover,
 .fb-form-name:focus {
@@ -69,6 +71,16 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.fb-topbar-actions::-webkit-scrollbar {
+  display: none;
+}
+.fb-topbar-actions > * {
+  flex-shrink: 0;
 }
 .fb-topbar-actions button {
   border: 1px solid var(--fb-border);
