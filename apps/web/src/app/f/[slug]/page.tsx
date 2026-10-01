@@ -32,10 +32,15 @@ export default async function PublicFormPage({ params }: PageProps) {
   const published = await getPublishedFormBySlug(slug);
   if (!published) notFound();
 
+  const accent = published.definition.theme?.colors?.primary;
+  const headingStyle = accent ? { borderBottom: `3px solid ${accent}`, display: "inline-block" } : undefined;
+
   if (published.closesAt && currentTime() > new Date(published.closesAt).getTime()) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-10">
-        <h1 className="mb-2 text-2xl font-bold tracking-tight">{published.definition.name}</h1>
+        <h1 className="mb-2 text-2xl font-bold tracking-tight" style={headingStyle}>
+          {published.definition.name}
+        </h1>
         <p role="status" className="text-muted-foreground">
           This form closed to new responses on{" "}
           {new Date(published.closesAt).toLocaleString("en-GB", { timeZone: "UTC", dateStyle: "long", timeStyle: "short" })}{" "}
@@ -58,7 +63,9 @@ export default async function PublicFormPage({ params }: PageProps) {
     if (!identity) {
       return (
         <div className="mx-auto max-w-2xl px-4 py-10">
-          <h1 className="mb-6 text-2xl font-bold tracking-tight">{published.definition.name}</h1>
+          <h1 className="mb-6 text-2xl font-bold tracking-tight" style={headingStyle}>
+            {published.definition.name}
+          </h1>
           <VerifyGate slug={slug} />
         </div>
       );
@@ -68,7 +75,9 @@ export default async function PublicFormPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
-      <h1 className="mb-6 text-2xl font-bold tracking-tight">{published.definition.name}</h1>
+      <h1 className="mb-6 text-2xl font-bold tracking-tight" style={headingStyle}>
+        {published.definition.name}
+      </h1>
       {verifiedEmail ? (
         <p className="mb-4 text-sm text-muted-foreground">
           Email verified as <strong>{verifiedEmail}</strong>.
