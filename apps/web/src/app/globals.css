@@ -133,22 +133,34 @@
 
 /* Homepage hero: a grid of boxes that highlight individually under the
    cursor (inspired by Aceternity's Background Boxes, hand-built in plain
-   CSS — a per-cell :hover transition needs no JS or animation library), a
-   word-by-word title reveal, and a spinning-gradient border on the primary
-   CTA. A fixed column count (not auto-fill) keeps every row fully covered
-   regardless of viewport width. All neutralized under prefers-reduced-motion
-   where relevant. */
-.hero-boxes {
+   CSS — a per-cell :hover transition needs no JS or animation library),
+   tilted in 3D like a receding floor, faded toward a soft off-white so the
+   heading text stays the clear focal point, a word-by-word title reveal,
+   and a spinning-gradient border on the primary CTA. A fixed column count
+   (not auto-fill) keeps every row fully covered regardless of viewport
+   width. All neutralized under prefers-reduced-motion where relevant. */
+.hero-bg {
+  background: oklch(0.965 0.006 72);
+}
+.hero-boxes-mask {
   position: absolute;
   inset: 0;
   z-index: 0;
+  overflow: hidden;
+  -webkit-mask-image: radial-gradient(ellipse 55% 60% at 50% 35%, black 0%, transparent 75%);
+  mask-image: radial-gradient(ellipse 55% 60% at 50% 35%, black 0%, transparent 75%);
+}
+.hero-boxes {
+  position: absolute;
+  inset: -30% -10%;
   display: grid;
   grid-template-columns: repeat(40, 1fr);
   grid-auto-rows: 2.25rem;
-  overflow: hidden;
+  transform: perspective(900px) rotateX(50deg) scale(1.4);
+  transform-origin: center 15%;
 }
 .hero-boxes > div {
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in oklch, var(--border), transparent 55%);
   transition: background-color 0.4s ease;
 }
 .hero-boxes > div:hover {
