@@ -32,7 +32,10 @@ export default async function PublicFormPage({ params }: PageProps) {
   const published = await getPublishedFormBySlug(slug);
   if (!published) notFound();
 
-  const accent = published.definition.theme?.colors?.primary;
+  // accentBorder is an explicit opt-in (see Theme schema) — colors.primary
+  // always has a default value, so without this flag every form's heading
+  // would show this accent whether the creator asked for it or not.
+  const accent = published.definition.theme?.accentBorder ? published.definition.theme?.colors?.primary : undefined;
   const headingStyle = accent ? { borderBottom: `3px solid ${accent}`, display: "inline-block" } : undefined;
 
   if (published.closesAt && currentTime() > new Date(published.closesAt).getTime()) {

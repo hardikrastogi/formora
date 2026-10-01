@@ -21,6 +21,10 @@ export function themeToCssVars(theme: Theme | undefined): CSSProperties {
     vars["--df-form-padding"] = "1.25rem";
   }
   if (theme.colors?.text) vars["--df-text"] = theme.colors.text;
+  // Opt-in only: colors.primary always has a default value, so without this
+  // flag every form would show an accent border whether the creator asked
+  // for one or not.
+  if (theme.accentBorder) vars["--df-form-border-width"] = "1px";
   if (theme.radius) vars["--df-radius"] = RADIUS[theme.radius];
   if (theme.density) vars["--df-gap"] = GAP[theme.density];
   if (theme.font) {

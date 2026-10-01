@@ -254,6 +254,16 @@ describe("Builder", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("below the WCAG AA minimum");
   });
 
+  it("the form border/heading accent toggle is off by default and persists when enabled", async () => {
+    const user = userEvent.setup();
+    renderBuilder();
+    const toggle = screen.getByRole("checkbox", { name: /Show an accent border and heading underline/ });
+    expect(toggle).not.toBeChecked();
+
+    await user.click(toggle);
+    expect(toggle).toBeChecked();
+  });
+
   it("autosaves the definition to localStorage after an edit", async () => {
     const user = userEvent.setup();
     renderBuilder("autosave_form");

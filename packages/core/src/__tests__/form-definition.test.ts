@@ -38,6 +38,29 @@ describe("FormDefinitionSchema", () => {
     }
   });
 
+  it("leaves theme.accentBorder falsy when not set, so a never-customized theme shows no accent", () => {
+    const result = FormDefinitionSchema.safeParse(baseDefinition());
+    expect(result.success).toBe(true);
+    if (result.success) {
+      // Theme is itself .partial(), so an omitted key parses as undefined
+      // rather than invoking its own .default() — the same behaviour every
+      // other optional theme field already has. What matters is that it's
+      // falsy, since every consumer (themeToCssVars, the public page) only
+      // ever checks `if (theme.accentBorder)`.
+      expect(result.data.theme.accentBorder).toBeFalsy();
+    }
+  });
+
+  it("accepts an explicit theme.accentBorder: true", () => {
+    const def = baseDefinition();
+    def.theme = { accentBorder: true };
+    const result = FormDefinitionSchema.safeParse(def);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.theme.accentBorder).toBe(true);
+    }
+  });
+
   it("accepts a per-field style override and rejects an invalid radius", () => {
     const ok = baseDefinition();
     ok.fields[0].style = { textColor: "#111111", radius: "lg" };
