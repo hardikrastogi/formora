@@ -7,7 +7,7 @@ const TITLE_WORDS = ["Forms", "as", "data."];
 export default function HomePage() {
   return (
     <section className="relative flex min-h-[calc(100vh-3.5rem)] items-center justify-center overflow-hidden px-4 text-center">
-      <div aria-hidden="true" className="hero-dotgrid" />
+      <div aria-hidden="true" className="hero-aurora" />
       <div className="relative z-10 mx-auto max-w-2xl">
         <p className="mb-3 text-sm font-medium text-muted-foreground">Open source · npm packages · any React app</p>
         <h1 className="text-5xl font-bold tracking-tight md:text-7xl">

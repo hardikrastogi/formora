@@ -20,33 +20,36 @@ export default async function SignUpPage({
   const googleEnabled = isGoogleConfigured();
 
   return (
-    <div className="mx-auto max-w-md px-4 py-16">
-      <h1 className="text-2xl font-bold tracking-tight">Create your Formora account</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Build and publish forms, and manage the ones you own. Your account is only for creating forms — anyone with a
-        link can still fill one out without signing up.
-      </p>
+    <div className="relative overflow-hidden">
+      <div aria-hidden="true" className="hero-aurora" />
+      <div className="relative z-10 mx-auto max-w-md px-4 py-16">
+        <h1 className="text-2xl font-bold tracking-tight">Create your Formora account</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Build and publish forms, and manage the ones you own. Your account is only for creating forms — anyone with
+          a link can still fill one out without signing up.
+        </p>
 
-      {googleEnabled ? (
-        <div className="mt-6">
-          <GoogleButton next={next} label="Sign up with Google" />
+        {googleEnabled ? (
+          <div className="mt-6">
+            <GoogleButton next={next} label="Sign up with Google" />
+          </div>
+        ) : null}
+
+        <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="h-px flex-1 bg-border" />
+          or
+          <div className="h-px flex-1 bg-border" />
         </div>
-      ) : null}
 
-      <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
-        <div className="h-px flex-1 bg-border" />
-        or
-        <div className="h-px flex-1 bg-border" />
+        <SignupForm next={next} />
+
+        <p className="mt-6 text-sm text-muted-foreground">
+          Already have an account?{" "}
+          <Link href={`/signin?next=${encodeURIComponent(next)}`} className="underline">
+            Log in
+          </Link>
+        </p>
       </div>
-
-      <SignupForm next={next} />
-
-      <p className="mt-6 text-sm text-muted-foreground">
-        Already have an account?{" "}
-        <Link href={`/signin?next=${encodeURIComponent(next)}`} className="underline">
-          Log in
-        </Link>
-      </p>
     </div>
   );
 }
