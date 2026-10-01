@@ -223,60 +223,98 @@
   .cta-glow:focus-visible::before {
     animation: none;
   }
-  .pill-nav-indicator {
+  .pill-nav-item .hover-circle,
+  .pill-nav-item .pill-label,
+  .pill-nav-item .pill-label-hover {
     transition: none;
   }
 }
 
-/* Header nav: a pill-shaped track with a sliding indicator behind whichever
-   link matches the current route (inspired by React Bits' Pill Nav). The
-   indicator only repositions on navigation, so plain transform/width
-   transitions are enough — no per-frame JS, no animation library. */
+/* Header nav: a faithful, pure-CSS port of React Bits' Pill Nav (the real
+   component uses GSAP; this reproduces the same visual language — a circle
+   rising from the bottom of a pill on hover, swapping the label for an
+   inverted-colour copy — with plain CSS transitions instead, since it's a
+   two-state hover animation, not a choreographed timeline. Colours follow
+   the exact scheme requested: a dark track/circle, light pills, text
+   flipping to light once the dark circle has risen. The active page gets
+   the small dot the original uses, not a filled pill. */
 .pill-nav {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 0.125rem;
-  padding: 0.25rem;
+  gap: 0.2rem;
+  height: 2.5rem;
+  padding: 3px;
   border-radius: 9999px;
-  background: var(--secondary);
-}
-.pill-nav-indicator {
-  position: absolute;
-  top: 0.25rem;
-  bottom: 0.25rem;
-  left: 0;
-  border-radius: 9999px;
-  background: var(--background);
-  box-shadow: 0 1px 2px oklch(0 0 0 / 0.08);
-  transition:
-    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-    width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: transform, width;
+  background: var(--foreground);
 }
 .pill-nav-item {
   position: relative;
-  z-index: 1;
-  padding: 0.35rem 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 1.1rem;
   border-radius: 9999px;
-  font-size: 0.8125rem;
-  color: var(--muted-foreground);
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease;
-}
-.pill-nav-item:hover {
-  color: var(--foreground);
   background: var(--background);
-  box-shadow: 0 1px 2px oklch(0 0 0 / 0.06);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  overflow: hidden;
+  isolation: isolate;
 }
-.pill-nav-item[aria-current="page"]:hover {
-  background: transparent;
-  box-shadow: none;
+.pill-nav-item .hover-circle {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 220%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--foreground);
+  transform: translate(-50%, 60%) scale(0);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.pill-nav-item[aria-current="page"] {
+.pill-nav-item:hover .hover-circle {
+  transform: translate(-50%, 60%) scale(1);
+}
+.pill-nav-item .label-stack {
+  position: relative;
+  z-index: 1;
+  display: grid;
+}
+.pill-nav-item .pill-label,
+.pill-nav-item .pill-label-hover {
+  grid-area: 1 / 1;
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.35s ease;
+}
+.pill-nav-item .pill-label {
   color: var(--foreground);
-  font-weight: 500;
+}
+.pill-nav-item .pill-label-hover {
+  color: var(--background);
+  opacity: 0;
+  transform: translateY(130%);
+}
+.pill-nav-item:hover .pill-label {
+  transform: translateY(-130%);
+  opacity: 0;
+}
+.pill-nav-item:hover .pill-label-hover {
+  transform: translateY(0);
+  opacity: 1;
+}
+.pill-nav-item[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--foreground);
+  z-index: 1;
 }
 
 .docs-prose {
