@@ -45,6 +45,30 @@ describe("builder store", () => {
     expect(state.selectedFieldId).toBeNull();
   });
 
+  it("removing a field also strips it out of other fields' conditions and calculated inputs", () => {
+    const store = freshStore();
+    const dependency = store.getState().addField(text);
+    const target = store.getState().addField(text);
+    const calcTarget = store.getState().addField(text);
+    store.getState().setVisibilityRule(target, {
+      targetFieldId: target,
+      match: "all",
+      conditions: [{ fieldId: dependency, operator: "isNotEmpty" }],
+    });
+    store.getState().setCalculatedField(calcTarget, {
+      targetFieldId: calcTarget,
+      inputs: [dependency],
+      formula: dependency,
+    });
+
+    store.getState().removeField(dependency);
+    const state = store.getState();
+    // The rule/formula referencing the removed field as their only
+    // condition/input has nothing left to evaluate, so it's dropped entirely.
+    expect(state.definition.logic.visibility).toHaveLength(0);
+    expect(state.definition.logic.calculated).toHaveLength(0);
+  });
+
   it("updateField patches only the given field", () => {
     const store = freshStore();
     const a = store.getState().addField(text);
@@ -111,6 +135,38 @@ describe("builder store", () => {
     expect(store.getState().isDirty).toBe(true);
     store.getState().markSaved();
     expect(store.getState().isDirty).toBe(false);
+  });
+
+  it("setVisibilityRule replaces the one rule for a target field, and clears it with null", () => {
+    const store = freshStore();
+    const a = store.getState().addField(text);
+    const b = store.getState().addField(email);
+    store.getState().setVisibilityRule(b, { targetFieldId: b, match: "all", conditions: [{ fieldId: a, operator: "isNotEmpty" }] });
+    expect(store.getState().definition.logic.visibility).toHaveLength(1);
+
+    store.getState().setVisibilityRule(b, { targetFieldId: b, match: "any", conditions: [{ fieldId: a, operator: "isEmpty" }] });
+    const rules = store.getState().definition.logic.visibility;
+    expect(rules).toHaveLength(1);
+    expect(rules[0].match).toBe("any");
+
+    store.getState().setVisibilityRule(b, null);
+    expect(store.getState().definition.logic.visibility).toHaveLength(0);
+  });
+
+  it("setCalculatedField replaces the one formula for a target field, and clears it with null", () => {
+    const store = freshStore();
+    const a = store.getState().addField(text);
+    const b = store.getState().addField(email);
+    store.getState().setCalculatedField(b, { targetFieldId: b, inputs: [a], formula: a });
+    expect(store.getState().definition.logic.calculated).toHaveLength(1);
+
+    store.getState().setCalculatedField(b, { targetFieldId: b, inputs: [a], formula: `${a} + 1` });
+    const calc = store.getState().definition.logic.calculated;
+    expect(calc).toHaveLength(1);
+    expect(calc[0].formula).toBe(`${a} + 1`);
+
+    store.getState().setCalculatedField(b, null);
+    expect(store.getState().definition.logic.calculated).toHaveLength(0);
   });
 
   it("setTheme merges rather than replaces the theme object", () => {

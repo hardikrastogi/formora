@@ -221,3 +221,131 @@ describe("FormRenderer", () => {
     expect(screen.getByRole("checkbox", { name: /I agree/ })).toBeChecked();
   });
 });
+
+describe("conditional visibility (visibleIf)", () => {
+  function visibilityDefinition(): FormDefinitionInput {
+    return {
+      id: "form_1",
+      name: "Visibility test",
+      schemaVersion: 1,
+      createdAt: NOW,
+      updatedAt: NOW,
+      fields: [
+        { id: "has_company", type: "checkbox", label: "Do you have a company?" },
+        { id: "company_name", type: "text", label: "Company name", required: true },
+      ],
+      layout: {
+        rows: [
+          { id: "r1", columns: [{ span: 12, fieldId: "has_company" }] },
+          { id: "r2", columns: [{ span: 12, fieldId: "company_name" }] },
+        ],
+      },
+      theme: {},
+      logic: {
+        visibility: [
+          {
+            targetFieldId: "company_name",
+            match: "all",
+            conditions: [{ fieldId: "has_company", operator: "equals", value: true }],
+          },
+        ],
+        calculated: [],
+      },
+    };
+  }
+
+  it("hides the dependent field until its condition is met, then shows it", async () => {
+    const user = userEvent.setup();
+    render(<FormRenderer definition={visibilityDefinition()} />);
+    expect(screen.queryByLabelText(/Company name/)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("checkbox", { name: /Do you have a company/ }));
+    expect(screen.getByLabelText(/Company name/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("checkbox", { name: /Do you have a company/ }));
+    expect(screen.queryByLabelText(/Company name/)).not.toBeInTheDocument();
+  });
+
+  it("does not require the hidden field to submit, but does once it becomes visible", async () => {
+    const onSubmit = vi.fn();
+    const user = userEvent.setup();
+    render(<FormRenderer definition={visibilityDefinition()} onSubmit={onSubmit} />);
+
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith({ has_company: false }));
+
+    onSubmit.mockClear();
+    await user.click(screen.getByRole("checkbox", { name: /Do you have a company/ }));
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+    expect(await screen.findByText('"Company name" is required')).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("drops a stale answer from submission once its field is hidden again", async () => {
+    const onSubmit = vi.fn();
+    const user = userEvent.setup();
+    render(<FormRenderer definition={visibilityDefinition()} onSubmit={onSubmit} />);
+
+    await user.click(screen.getByRole("checkbox", { name: /Do you have a company/ }));
+    await user.type(screen.getByLabelText(/Company name/), "Acme");
+    await user.click(screen.getByRole("checkbox", { name: /Do you have a company/ })); // hide again
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith({ has_company: false }));
+  });
+});
+
+describe("calculated fields", () => {
+  function calculatedDefinition(): FormDefinitionInput {
+    return {
+      id: "form_1",
+      name: "Calculated test",
+      schemaVersion: 1,
+      createdAt: NOW,
+      updatedAt: NOW,
+      fields: [
+        { id: "seats", type: "number", label: "Seats" },
+        { id: "price_per_seat", type: "number", label: "Price per seat" },
+        { id: "total", type: "number", label: "Total" },
+      ],
+      layout: {
+        rows: [
+          { id: "r1", columns: [{ span: 4, fieldId: "seats" }] },
+          { id: "r2", columns: [{ span: 4, fieldId: "price_per_seat" }] },
+          { id: "r3", columns: [{ span: 4, fieldId: "total" }] },
+        ],
+      },
+      theme: {},
+      logic: {
+        visibility: [],
+        calculated: [{ targetFieldId: "total", inputs: ["seats", "price_per_seat"], formula: "seats * price_per_seat" }],
+      },
+    };
+  }
+
+  it("computes the target field from its inputs and keeps it read-only", async () => {
+    const user = userEvent.setup();
+    render(<FormRenderer definition={calculatedDefinition()} />);
+    const total = screen.getByLabelText("Total");
+    expect(total).toBeDisabled();
+
+    await user.type(screen.getByLabelText("Seats"), "3");
+    await user.type(screen.getByLabelText("Price per seat"), "10");
+    await waitFor(() => expect(total).toHaveValue("30"));
+  });
+
+  it("submits the server-computed value, ignoring whatever the field displayed", async () => {
+    const onSubmit = vi.fn();
+    const user = userEvent.setup();
+    render(<FormRenderer definition={calculatedDefinition()} onSubmit={onSubmit} />);
+
+    await user.type(screen.getByLabelText("Seats"), "4");
+    await user.type(screen.getByLabelText("Price per seat"), "9");
+    await waitFor(() => expect(screen.getByLabelText("Total")).toHaveValue("36"));
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({ seats: 4, price_per_seat: 9, total: 36 }),
+    );
+  });
+});

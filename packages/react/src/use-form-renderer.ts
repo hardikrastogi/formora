@@ -1,7 +1,9 @@
-import { useCallback, useMemo, useState } from "react";
-import { useForm, type FieldErrors, type Resolver, type UseFormReturn } from "react-hook-form";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm, useWatch, type FieldErrors, type Resolver, type UseFormReturn } from "react-hook-form";
 import {
   FormDefinitionSchema,
+  evaluateCalculated,
+  evaluateVisibility,
   type FieldConfig,
   type FieldPluginRegistry,
   type FormDefinition,
@@ -33,7 +35,10 @@ export interface UseFormRendererResult {
   definition: FormDefinition | null;
   /** Human-readable problems when the definition itself is invalid. */
   definitionIssues: string[];
+  /** Rows with any currently-hidden (visibleIf) fields already filtered out. */
   rows: RenderedRow[];
+  /** Fields whose value is computed from others (logic.calculated) — render these read-only. */
+  calculatedFieldIds: ReadonlySet<string>;
   form: UseFormReturn<Answers>;
   registry: FieldPluginRegistry;
   submit: (event?: React.BaseSyntheticEvent) => Promise<void>;
@@ -117,13 +122,59 @@ export function useFormRenderer(
     resolver,
   });
 
+  // Subscribes to every field so visibility and calculated values stay live
+  // as the respondent types — not just re-evaluated on submit.
+  const watchedValues = useWatch({ control: form.control }) as Answers;
+
+  const visibility = useMemo(
+    () => (definition ? evaluateVisibility(definition, watchedValues) : {}),
+    [definition, watchedValues],
+  );
+  const calculated = useMemo(
+    () => (definition ? evaluateCalculated(definition, watchedValues) : {}),
+    [definition, watchedValues],
+  );
+  const calculatedFieldIds = useMemo(
+    () => new Set(definition?.logic.calculated.map((c) => c.targetFieldId) ?? []),
+    [definition],
+  );
+
+  // Writes computed values into the form itself (not just a display-only
+  // overlay) so they're included in the submitted answers like any other
+  // field. The inner guard keeps this from looping: once the written value
+  // matches what's already there, the next pass is a no-op.
+  useEffect(() => {
+    for (const [fieldId, value] of Object.entries(calculated)) {
+      if (watchedValues[fieldId] !== value) {
+        form.setValue(fieldId, value, { shouldValidate: false, shouldDirty: false, shouldTouch: false });
+      }
+    }
+    // form is a stable ref from react-hook-form; watchedValues is covered by calculated already having recomputed from it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [calculated]);
+
+  const visibleRows = useMemo(
+    () =>
+      rows
+        .map((row) => ({ ...row, columns: row.columns.filter((col) => visibility[col.field.id] !== false) }))
+        .filter((row) => row.columns.length > 0),
+    [rows, visibility],
+  );
+
   const [submitError, setSubmitError] = useState<string | null>(null);
   const onSubmit = options.onSubmit;
 
   const submit = form.handleSubmit(async (values) => {
     setSubmitError(null);
     try {
-      await onSubmit?.(cleanAnswers(values));
+      // A hidden field was never asked — its answer (if any lingers from
+      // before it was hidden) is never part of what actually gets submitted.
+      const visibleAtSubmit = definition ? evaluateVisibility(definition, values) : {};
+      const shown: Answers = {};
+      for (const [key, value] of Object.entries(values)) {
+        if (visibleAtSubmit[key] !== false) shown[key] = value;
+      }
+      await onSubmit?.(cleanAnswers(shown));
     } catch (err) {
       setSubmitError(err instanceof Error && err.message ? err.message : "Submission failed. Please try again.");
     }
@@ -132,7 +183,8 @@ export function useFormRenderer(
   return {
     definition,
     definitionIssues,
-    rows,
+    rows: visibleRows,
+    calculatedFieldIds,
     form,
     registry,
     submit,

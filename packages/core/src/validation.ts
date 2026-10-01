@@ -1,5 +1,6 @@
 import type { FormDefinition } from "./schema/form-definition";
 import type { FieldConfig } from "./schema/field";
+import { evaluateVisibility } from "./logic-engine";
 
 export interface SubmissionValidationResult {
   success: boolean;
@@ -54,8 +55,12 @@ export function validateSubmission(
   answers: Record<string, unknown>
 ): SubmissionValidationResult {
   const errors: Record<string, string[]> = {};
+  // A field hidden by its own visibility rule was never asked — not required,
+  // not format-checked, regardless of whatever stale value it might still hold.
+  const visibility = evaluateVisibility(definition, answers);
 
   for (const field of definition.fields) {
+    if (visibility[field.id] === false) continue;
     const fieldErrors = validateField(field, answers[field.id]);
     if (fieldErrors.length > 0) {
       errors[field.id] = fieldErrors;

@@ -1,4 +1,5 @@
 import {
+  evaluateVisibility,
   validateSubmission,
   type FieldPluginRegistry,
   type FormDefinition,
@@ -26,9 +27,10 @@ export function collectErrors(
   answers: Answers,
 ): Record<string, string[]> {
   const errors: Record<string, string[]> = { ...validateSubmission(definition, answers).errors };
+  const visibility = evaluateVisibility(definition, answers);
 
   for (const field of definition.fields) {
-    if (errors[field.id]) continue;
+    if (errors[field.id] || visibility[field.id] === false) continue;
     const plugin = registry.get(field.type);
     const value = answers[field.id];
     if (!plugin?.validate || isBlank(value)) continue;

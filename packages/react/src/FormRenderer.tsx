@@ -24,9 +24,10 @@ interface FieldCellProps {
   baseId: string;
   classNames: FormClassNames;
   disabled: boolean;
+  calculated: boolean;
 }
 
-function FieldCell({ column, form, baseId, classNames, disabled }: FieldCellProps) {
+function FieldCell({ column, form, baseId, classNames, disabled, calculated }: FieldCellProps) {
   const { field, plugin, span } = column;
   const style = fieldStyleToCssVars(field.style, span);
 
@@ -89,9 +90,12 @@ function FieldCell({ column, form, baseId, classNames, disabled }: FieldCellProp
               onChange={rhf.onChange}
               onBlur={rhf.onBlur}
               invalid={Boolean(error)}
-              disabled={disabled}
+              disabled={disabled || calculated}
               classNames={classNames}
             />
+            {calculated && (
+              <p className={cx("df-description", classNames.description)}>Calculated automatically</p>
+            )}
             {field.description && (
               <p id={descriptionId} className={cx("df-description", classNames.description)}>
                 {field.description}
@@ -164,6 +168,7 @@ export function FormRenderer({
               baseId={baseId}
               classNames={classNames}
               disabled={disabled || r.isSubmitting}
+              calculated={r.calculatedFieldIds.has(column.field.id)}
             />
           ))}
         </div>

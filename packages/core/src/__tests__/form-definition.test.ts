@@ -87,4 +87,41 @@ describe("FormDefinitionSchema", () => {
     const result = FormDefinitionSchema.safeParse(def);
     expect(result.success).toBe(false);
   });
+
+  it("rejects a visibility condition referencing an unknown fieldId", () => {
+    const def = baseDefinition();
+    def.logic!.visibility!.push({
+      targetFieldId: "email",
+      match: "all",
+      conditions: [{ fieldId: "ghost_field", operator: "isNotEmpty" }],
+    });
+    const result = FormDefinitionSchema.safeParse(def);
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts a valid visibility rule", () => {
+    const def = baseDefinition();
+    def.logic!.visibility!.push({
+      targetFieldId: "email",
+      match: "all",
+      conditions: [{ fieldId: "name", operator: "isNotEmpty" }],
+    });
+    expect(FormDefinitionSchema.safeParse(def).success).toBe(true);
+  });
+
+  it("rejects a calculated field targeting or referencing an unknown fieldId", () => {
+    const targetUnknown = baseDefinition();
+    targetUnknown.logic!.calculated!.push({ targetFieldId: "ghost", inputs: ["name"], formula: "name" });
+    expect(FormDefinitionSchema.safeParse(targetUnknown).success).toBe(false);
+
+    const inputUnknown = baseDefinition();
+    inputUnknown.logic!.calculated!.push({ targetFieldId: "name", inputs: ["ghost"], formula: "ghost" });
+    expect(FormDefinitionSchema.safeParse(inputUnknown).success).toBe(false);
+  });
+
+  it("accepts a valid calculated field", () => {
+    const def = baseDefinition();
+    def.logic!.calculated!.push({ targetFieldId: "name", inputs: ["email"], formula: "email" });
+    expect(FormDefinitionSchema.safeParse(def).success).toBe(true);
+  });
 });

@@ -1,4 +1,4 @@
-import { validateSubmission, type FormDefinition } from "@hardikrastogi/core";
+import { evaluateVisibility, validateSubmission, type FormDefinition } from "@hardikrastogi/core";
 import { EMAIL_PATTERN, URL_PATTERN } from "./fields/patterns";
 
 /**
@@ -33,9 +33,10 @@ export function collectServerErrors(
   answers: Record<string, unknown>,
 ): Record<string, string[]> {
   const errors: Record<string, string[]> = { ...validateSubmission(definition, answers).errors };
+  const visibility = evaluateVisibility(definition, answers);
 
   for (const field of definition.fields) {
-    if (errors[field.id]) continue;
+    if (errors[field.id] || visibility[field.id] === false) continue;
     const value = answers[field.id];
     if (isBlank(value)) continue;
     const check = TYPE_CHECKS[field.type];
