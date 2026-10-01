@@ -10,7 +10,7 @@ const LINK_MINUTES = 15;
 const MAX_PER_EMAIL_PER_HOUR = 5;
 const MAX_PER_IP_PER_HOUR = 20;
 
-export type AccountTokenPurpose = "signup" | "reset";
+export type AccountTokenPurpose = "signup" | "reset" | "change-email";
 
 export class RateLimitedError extends Error {
   constructor(
@@ -23,6 +23,7 @@ export class RateLimitedError extends Error {
 
 interface RequestOptions {
   pendingPasswordHash?: string | null;
+  userId?: string | null;
 }
 
 /**
@@ -72,15 +73,22 @@ export async function requestAccountToken(
     purpose,
     email,
     pendingPasswordHash: options.pendingPasswordHash ?? null,
+    userId: options.userId ?? null,
     tokenHash: hashToken(token),
     expiresAt: new Date(now + LINK_MINUTES * 60 * 1000),
     ipHash,
   });
 
-  const path = purpose === "signup" ? "/verify-account" : "/reset-password";
+  const path = purpose === "signup" ? "/verify-account" : purpose === "reset" ? "/reset-password" : "/account/confirm-email";
   const link = `${appOrigin(request)}${path}?token=${token}`;
-  const subject = purpose === "signup" ? "Verify your email for Formora" : "Reset your Formora password";
-  const action = purpose === "signup" ? "finish creating your account" : "choose a new password";
+  const subject =
+    purpose === "signup"
+      ? "Verify your email for Formora"
+      : purpose === "reset"
+        ? "Reset your Formora password"
+        : "Confirm your new Formora email address";
+  const action =
+    purpose === "signup" ? "finish creating your account" : purpose === "reset" ? "choose a new password" : "confirm this new email address";
   await sendEmail({
     to: email,
     subject,
@@ -93,6 +101,7 @@ export async function requestAccountToken(
 interface ConsumedToken {
   email: string;
   pendingPasswordHash: string | null;
+  userId: string | null;
 }
 
 /** Atomically checks and consumes a token so a double-click or replay can never succeed twice. */
@@ -102,7 +111,11 @@ export async function consumeAccountToken(purpose: AccountTokenPurpose, token: s
   const challenge = await AccountVerificationTokenModel.findOneAndUpdate(
     { purpose, tokenHash: hashToken(token), usedAt: null, expiresAt: { $gt: now } },
     { $set: { usedAt: now } },
-  ).lean<{ email: string; pendingPasswordHash: string | null } | null>();
+  ).lean<{ email: string; pendingPasswordHash: string | null; userId: string | null } | null>();
   if (!challenge) return null;
-  return { email: challenge.email, pendingPasswordHash: challenge.pendingPasswordHash ?? null };
+  return {
+    email: challenge.email,
+    pendingPasswordHash: challenge.pendingPasswordHash ?? null,
+    userId: challenge.userId ?? null,
+  };
 }

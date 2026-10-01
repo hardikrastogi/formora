@@ -68,6 +68,8 @@ test.describe("Phase 5b: creator accounts", () => {
     await linkForm.getByLabel("Email address").fill("not-an-email");
     await linkForm.getByRole("button", { name: "Email me a sign-in link" }).click();
     await expect(page.getByText("Enter a valid email address.")).toBeVisible();
+    // The typed address survives the failed attempt instead of being cleared.
+    await expect(linkForm.getByLabel("Email address")).toHaveValue("not-an-email");
   });
 
   test("a signed-in visitor is never redirected off-site through the next parameter", async ({ page }) => {

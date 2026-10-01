@@ -30,6 +30,20 @@ interface ResponsesPageData {
 // file pulls in Mongoose and can't be imported from a client component.
 const PAGE_SIZE = 20;
 
+// A plain yyyy-mm-dd is local-midnight-to-local-midnight; "to" is pushed to
+// the end of that day so the whole day is included, not just its first instant.
+function fromDateToIso(value: string): string | null {
+  if (!value) return null;
+  const d = new Date(`${value}T00:00:00`);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+function toDateToIso(value: string): string | null {
+  if (!value) return null;
+  const d = new Date(`${value}T23:59:59.999`);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 function previewOf(answers: Record<string, unknown>, fields: FieldMeta[]): string {
   for (const field of fields) {
     const value = answers[field.id];
@@ -46,12 +60,17 @@ export function ResponsesList({ slug }: { slug: string }) {
 
   const initialSort = searchParams.get("sort") === "asc" ? "asc" : "desc";
   const initialSearch = searchParams.get("search") ?? "";
+  const initialFrom = searchParams.get("from") ?? "";
+  const initialTo = searchParams.get("to") ?? "";
   const parsedOffset = Number(searchParams.get("offset"));
   const initialOffset = Number.isInteger(parsedOffset) && parsedOffset > 0 ? parsedOffset : 0;
 
   const [search, setSearch] = useState(initialSearch);
   const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
   const [sort, setSort] = useState<"asc" | "desc">(initialSort);
+  // Plain yyyy-mm-dd, straight from a <input type="date">.
+  const [fromDate, setFromDate] = useState(initialFrom);
+  const [toDate, setToDate] = useState(initialTo);
   const [data, setData] = useState<ResponsesPageData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -67,10 +86,12 @@ export function ResponsesList({ slug }: { slug: string }) {
   // back/forward buttons, land back on the same filters and the same depth
   // scrolled to — instead of always resetting to the first page.
   const syncUrl = useCallback(
-    (nextSearch: string, nextSort: "asc" | "desc", loadedCount: number) => {
+    (nextSearch: string, nextSort: "asc" | "desc", nextFrom: string, nextTo: string, loadedCount: number) => {
       const params = new URLSearchParams();
       if (nextSearch) params.set("search", nextSearch);
       if (nextSort === "asc") params.set("sort", "asc");
+      if (nextFrom) params.set("from", nextFrom);
+      if (nextTo) params.set("to", nextTo);
       if (loadedCount > PAGE_SIZE) params.set("offset", String(loadedCount));
       const qs = params.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
@@ -90,12 +111,16 @@ export function ResponsesList({ slug }: { slug: string }) {
       try {
         const params = new URLSearchParams({ sort, offset: "0", limit: String(limit) });
         if (debouncedSearch) params.set("search", debouncedSearch);
+        const from = fromDateToIso(fromDate);
+        if (from) params.set("from", from);
+        const to = toDateToIso(toDate);
+        if (to) params.set("to", to);
         const res = await fetch(`/api/forms/${slug}/responses?${params}`);
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Could not load responses.");
         const page = (await res.json()) as ResponsesPageData;
         if (!cancelled) {
           setData(page);
-          syncUrl(debouncedSearch, sort, page.responses.length);
+          syncUrl(debouncedSearch, sort, fromDate, toDate, page.responses.length);
         }
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Could not load responses.");
@@ -107,7 +132,7 @@ export function ResponsesList({ slug }: { slug: string }) {
     // initialOffset and syncUrl are intentionally not deps: this effect should
     // only re-run when the actual filters change, not on every URL sync.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug, debouncedSearch, sort]);
+  }, [slug, debouncedSearch, sort, fromDate, toDate]);
 
   const loadMore = useCallback(async () => {
     if (!data || !data.hasMore || loadingMore) return;
@@ -119,12 +144,16 @@ export function ResponsesList({ slug }: { slug: string }) {
         limit: String(PAGE_SIZE),
       });
       if (debouncedSearch) params.set("search", debouncedSearch);
+      const from = fromDateToIso(fromDate);
+      if (from) params.set("from", from);
+      const to = toDateToIso(toDate);
+      if (to) params.set("to", to);
       const res = await fetch(`/api/forms/${slug}/responses?${params}`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Could not load more responses.");
       const page = (await res.json()) as ResponsesPageData;
       setData((prev) => {
         const merged = prev ? { ...page, responses: [...prev.responses, ...page.responses] } : page;
-        syncUrl(debouncedSearch, sort, merged.responses.length);
+        syncUrl(debouncedSearch, sort, fromDate, toDate, merged.responses.length);
         return merged;
       });
     } catch (e) {
@@ -132,7 +161,7 @@ export function ResponsesList({ slug }: { slug: string }) {
     } finally {
       setLoadingMore(false);
     }
-  }, [data, loadingMore, sort, debouncedSearch, slug, syncUrl]);
+  }, [data, loadingMore, sort, debouncedSearch, fromDate, toDate, slug, syncUrl]);
 
   // Infinite scroll: fetch the next page as soon as the sentinel below the
   // list scrolls into view, instead of requiring an explicit click.
@@ -167,6 +196,41 @@ export function ResponsesList({ slug }: { slug: string }) {
         >
           {sort === "desc" ? "Newest first" : "Oldest first"}
         </button>
+        <label htmlFor="responses-from" className="sr-only">
+          From date
+        </label>
+        <input
+          id="responses-from"
+          type="date"
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+          max={toDate || undefined}
+          className="rounded-md border bg-background px-2 py-1.5 text-sm"
+        />
+        <span className="text-sm text-muted-foreground">to</span>
+        <label htmlFor="responses-to" className="sr-only">
+          To date
+        </label>
+        <input
+          id="responses-to"
+          type="date"
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+          min={fromDate || undefined}
+          className="rounded-md border bg-background px-2 py-1.5 text-sm"
+        />
+        {fromDate || toDate ? (
+          <button
+            type="button"
+            onClick={() => {
+              setFromDate("");
+              setToDate("");
+            }}
+            className="text-sm text-muted-foreground underline hover:text-foreground"
+          >
+            Clear dates
+          </button>
+        ) : null}
         {data ? (
           <span className="text-sm text-muted-foreground">
             {data.totalCount} response{data.totalCount === 1 ? "" : "s"}
@@ -184,7 +248,11 @@ export function ResponsesList({ slug }: { slug: string }) {
 
       {data && data.responses.length === 0 ? (
         <p className="mt-6 text-sm text-muted-foreground">
-          {debouncedSearch ? "No responses match your search." : "No responses yet."}
+          {fromDate || toDate
+            ? "No responses match your filters."
+            : debouncedSearch
+              ? "No responses match your search."
+              : "No responses yet."}
         </p>
       ) : null}
 

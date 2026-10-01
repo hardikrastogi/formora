@@ -32,6 +32,9 @@ export function AuthNav() {
       <Link href="/my-responses" className="text-muted-foreground hover:text-foreground">
         Your responses
       </Link>
+      <Link href="/account" className="text-muted-foreground hover:text-foreground">
+        Account
+      </Link>
       <Link href="/signout" className="text-muted-foreground hover:text-foreground">
         Sign out
       </Link>

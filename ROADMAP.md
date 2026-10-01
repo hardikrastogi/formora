@@ -203,14 +203,14 @@ Tracked here so these gaps are fixed as the hosted product progresses. They are 
 
 #### Other tracked product gaps
 
-- [ ] No account settings page — can't change email, remove a password, or disconnect Google from a creator account
-- [ ] The magic-link sign-in form (`SignInForm`, 5b) clears its email field after a failed submission, the same bug already fixed in the password login form — low severity (one field to retype), left alone when found in 5b-2
+- [x] **Account settings page** (`/account`). Change email (sent to and confirmed by the *new* address via a single-use, 15-minute link — reuses the same `AccountVerificationToken`/`requestAccountToken` machinery as signup/reset, a new `change-email` purpose), remove a password, and disconnect Google. No "do you have another sign-in method" lockout guard on remove/disconnect — unnecessary, since every account can always fall back to an emailed magic link regardless of password or Google (that provider is registered unconditionally in `auth.ts`). 7 new e2e tests
+- [x] The magic-link sign-in form (`SignInForm`, 5b) no longer clears its email field after a failed submission — same controlled-input fix already used in the password login form
 - [ ] A verified domain with SPF/DKIM in Resend, so sign-in/verification email reaches any address, not just the Resend account's own — owner task, optional for a demo
 
 ### Phase 5d — Response dashboard, account linking, and editing ✅ DONE
 
-- [x] Creator dashboard per form: total response count, server-side cursor-paginated list (never loads all responses at once) — `/forms/[slug]/responses`
-- [x] Search, sorting, and a response-details view with complete answers, labelled against the version that specific response actually answered. ~~Filters~~ — a `from`/`to` date-range filter exists in the API but has no UI yet
+- [x] Creator dashboard per form: total response count, server-side paginated list (never loads all responses at once) — `/forms/[slug]/responses`. Originally cursor-based; switched to plain offset/limit + `hasMore`, with scroll-triggered (`IntersectionObserver`) loading instead of a click, and search/sort/date-range/offset synced into the URL so refresh or back/forward restores the same filters and scroll depth
+- [x] Search, sorting, a `from`/`to` date-range filter (two date inputs above the list; "to" is pushed to the end of that day so the whole day is included), and a response-details view with complete answers, labelled against the version that specific response actually answered
 - [x] ~~Async~~ CSV export — a synchronous streamed download (fixed-size batches, flat memory use), not a background job. Deliberately not async and not `.xlsx`: see `PHASE_5D_RESPONSE_DASHBOARD.md` for why building real job infrastructure now would be solving a problem this app doesn't have yet, same reasoning as the deferred Redis rate-limit item
 - [x] Database indexes: `{formId, submittedAt, _id}` (replaces the plan's `formId + responseId` once cursor pagination's actual query shape was worked out — `_id` as a tiebreaker is what pagination needed) and `{respondentIdentityId, submittedAt}`
 - [x] Authorization check on every list/detail/export endpoint — ownership only, via the shared `getOwnedForm` helper; a form owned by someone else 404s exactly like a nonexistent one
