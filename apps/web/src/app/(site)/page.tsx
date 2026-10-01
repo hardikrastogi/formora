@@ -3,17 +3,20 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "cn";
 
 const TITLE_WORDS = ["Forms", "as", "data."];
-// A fixed row count paired with hero-boxes' fixed 40-column grid — enough to
-// cover a tall hero section without a client-side resize listener.
-const BOX_COUNT = 40 * 22;
+// A fixed row count paired with hero-boxes' fixed 40-column grid — generous
+// enough to cover the overscanned, perspective-scaled area without a
+// client-side resize listener.
+const BOX_COUNT = 40 * 36;
 
 export default function HomePage() {
   return (
-    <section className="relative flex min-h-[calc(100vh-3.5rem)] items-center justify-center overflow-hidden px-4 text-center">
-      <div aria-hidden="true" className="hero-boxes">
-        {Array.from({ length: BOX_COUNT }, (_, i) => (
-          <div key={i} />
-        ))}
+    <section className="hero-bg relative flex min-h-[calc(100vh-3.5rem)] items-center justify-center overflow-hidden px-4 text-center">
+      <div aria-hidden="true" className="hero-boxes-mask">
+        <div className="hero-boxes">
+          {Array.from({ length: BOX_COUNT }, (_, i) => (
+            <div key={i} />
+          ))}
+        </div>
       </div>
       <div className="relative z-10 mx-auto max-w-2xl">
         <p className="mb-3 text-sm font-medium text-muted-foreground">Open source · npm packages · any React app</p>
