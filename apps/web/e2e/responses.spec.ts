@@ -68,7 +68,7 @@ test.describe("Phase 5d: response dashboard", () => {
     await expect(page.locator("ul li").first()).toContainText("First");
   });
 
-  test("pagination loads more responses via cursor", async ({ playwright, baseURL }) => {
+  test("pagination loads more responses via offset/limit", async ({ playwright, baseURL }) => {
     const creator = await playwright.request.newContext({ baseURL });
     await signIn(creator, uniqueEmail("resppage"));
     const slug = uniqueId("resppage");
@@ -78,22 +78,51 @@ test.describe("Phase 5d: response dashboard", () => {
     }
 
     // A small limit forces pagination with only 3 real responses.
-    const first = await creator.get(`/api/forms/${slug}/responses?limit=2`);
+    const first = await creator.get(`/api/forms/${slug}/responses?limit=2&offset=0`);
     const firstBody = await first.json();
     expect(firstBody.responses).toHaveLength(2);
-    expect(firstBody.nextCursor).not.toBeNull();
+    expect(firstBody.hasMore).toBe(true);
     expect(firstBody.totalCount).toBe(3);
 
-    const second = await creator.get(`/api/forms/${slug}/responses?limit=2&cursor=${firstBody.nextCursor}`);
+    const second = await creator.get(`/api/forms/${slug}/responses?limit=2&offset=2`);
     const secondBody = await second.json();
     expect(secondBody.responses).toHaveLength(1);
-    expect(secondBody.nextCursor).toBeNull();
+    expect(secondBody.hasMore).toBe(false);
 
     // No overlap between pages.
     const firstIds = new Set(firstBody.responses.map((r: { id: string }) => r.id));
     expect(firstIds.has(secondBody.responses[0].id)).toBe(false);
 
+    // A negative or non-integer offset is refused, not silently clamped.
+    expect((await creator.get(`/api/forms/${slug}/responses?offset=-1`)).status()).toBe(400);
+    expect((await creator.get(`/api/forms/${slug}/responses?offset=1.5`)).status()).toBe(400);
+
     await creator.dispose();
+  });
+
+  test("scrolling to the bottom auto-loads the next page, and the URL remembers how deep you've scrolled", async ({
+    page,
+  }) => {
+    await signIn(page.request, uniqueEmail("respscroll"));
+    const slug = uniqueId("respscroll");
+    await page.request.post("/api/forms/publish", { data: { definition: definition(slug) } });
+    // One more than the page size (20) so a second, auto-loaded page is needed.
+    for (let i = 0; i < 22; i++) {
+      await submit(page.request, slug, `Respondent ${i}`, `k${i}`);
+    }
+
+    await page.goto(`/forms/${slug}/responses`);
+    await expect(page.getByText("22 responses")).toBeVisible();
+    await expect(page.locator("ul li")).toHaveCount(20);
+
+    // Scrolling the sentinel into view loads the rest without any click.
+    await page.locator("ul li").last().scrollIntoViewIfNeeded();
+    await expect(page.locator("ul li")).toHaveCount(22);
+    await expect(page).toHaveURL(/[?&]offset=22(&|$)/);
+
+    // Reloading with that URL restores the same depth, not just the first page.
+    await page.reload();
+    await expect(page.locator("ul li")).toHaveCount(22);
   });
 
   test("the detail view shows full answers, labelled, against the version actually answered", async ({ page }) => {

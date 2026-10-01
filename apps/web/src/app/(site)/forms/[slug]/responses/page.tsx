@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import { getUserId } from "@/lib/auth/session";
 import { getOwnedForm } from "@/lib/db/owned-form";
@@ -36,7 +37,9 @@ export default async function ResponsesPage({ params }: { params: Promise<{ slug
           Export CSV
         </a>
       </div>
-      <ResponsesList slug={slug} />
+      <Suspense fallback={<p className="mt-6 text-sm text-muted-foreground">Loading…</p>}>
+        <ResponsesList slug={slug} />
+      </Suspense>
     </div>
   );
 }

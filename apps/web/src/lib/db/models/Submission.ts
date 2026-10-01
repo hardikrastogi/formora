@@ -29,8 +29,8 @@ const SubmissionSchema = new Schema(
 // Retrying the same submission attempt (double-click, network retry) must
 // never create a second row for the same form.
 SubmissionSchema.index({ formId: 1, idempotencyKey: 1 }, { unique: true });
-// _id as a tiebreaker keeps cursor-based pagination stable even if two
-// submissions land in the exact same millisecond.
+// _id as a tiebreaker keeps sort order stable even if two submissions land
+// in the exact same millisecond (the responses list sorts by both).
 SubmissionSchema.index({ formId: 1, submittedAt: -1, _id: -1 });
 // Powers "Your responses" (Phase 5d account linking) — every submission a
 // given verified identity ever made, across every form, newest first.
