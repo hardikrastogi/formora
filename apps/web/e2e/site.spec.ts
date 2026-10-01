@@ -43,6 +43,10 @@ test("docs sidebar navigates between pages", async ({ page }) => {
 
 for (const path of ["/", "/docs", "/docs/quickstart", "/docs/form-definition", "/playground", "/signin"]) {
   test("no automatically detectable accessibility violations on " + path, async ({ page }) => {
+    // The homepage hero fades in word-by-word; scanning mid-fade would catch a
+    // genuinely transient, intentional low-contrast instant, not a real defect.
+    // Reduced motion is respected site-wide, so this also exercises that path.
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(path);
     const results = await new AxeBuilder({ page }).analyze();
     const summary = results.violations.map((v) => v.id + ": " + v.nodes.map((n) => n.target.join(" ")).join(" | "));
