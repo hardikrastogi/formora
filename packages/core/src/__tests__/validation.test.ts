@@ -60,4 +60,31 @@ describe("validateSubmission", () => {
     const result = validateSubmission(definition, { username: "hardik" });
     expect(result.success).toBe(true);
   });
+
+  it("skips required/format checks entirely for a field hidden by its own visibility rule", () => {
+    const def: FormDefinition = {
+      ...definition,
+      fields: [
+        { id: "has_company", type: "checkbox", label: "Do you have a company?", required: false, defaultProps: {} },
+        { id: "company_name", type: "text", label: "Company name", required: true, defaultProps: {} },
+      ],
+      logic: {
+        visibility: [
+          {
+            targetFieldId: "company_name",
+            match: "all",
+            conditions: [{ fieldId: "has_company", operator: "equals", value: true }],
+          },
+        ],
+        calculated: [],
+      },
+    };
+    // Hidden (has_company is false) — the otherwise-required company_name is not enforced.
+    expect(validateSubmission(def, { has_company: false }).success).toBe(true);
+    // Visible (has_company is true) — now it's actually required again.
+    const shown = validateSubmission(def, { has_company: true });
+    expect(shown.success).toBe(false);
+    expect(shown.errors.company_name).toBeDefined();
+    expect(validateSubmission(def, { has_company: true, company_name: "Acme" }).success).toBe(true);
+  });
 });

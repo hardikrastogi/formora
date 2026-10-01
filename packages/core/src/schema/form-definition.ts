@@ -57,6 +57,34 @@ export const FormDefinitionSchema = z
           path: ["logic", "visibility"],
         });
       }
+      for (const condition of rule.conditions) {
+        if (!fieldIds.has(condition.fieldId)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Visibility condition references unknown fieldId: "${condition.fieldId}"`,
+            path: ["logic", "visibility"],
+          });
+        }
+      }
+    }
+
+    for (const calc of def.logic.calculated) {
+      if (!fieldIds.has(calc.targetFieldId)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Calculated field targets unknown fieldId: "${calc.targetFieldId}"`,
+          path: ["logic", "calculated"],
+        });
+      }
+      for (const inputId of calc.inputs) {
+        if (!fieldIds.has(inputId)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Calculated field references unknown input fieldId: "${inputId}"`,
+            path: ["logic", "calculated"],
+          });
+        }
+      }
     }
   });
 

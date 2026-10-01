@@ -9,3 +9,4 @@ export * from "./schema/form-submission";
 export * from "./plugin";
 export * from "./validation";
 export * from "./versioning";
+export * from "./logic-engine";

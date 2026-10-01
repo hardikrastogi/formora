@@ -74,7 +74,23 @@ export default function BuilderDocsPage() {
       <p>
         A field&apos;s inspector has four tabs: <strong>Basic</strong> (label, description, required, placeholder or
         options), <strong>Validation</strong> (length or range rules, matching the field type), <strong>Logic</strong>{" "}
-        (reserved — see below), and <strong>Style</strong> (width in grid columns, border colour, corner radius).
+        (conditional visibility and, for number fields, a calculated value — see below), and <strong>Style</strong>{" "}
+        (width in grid columns, border colour, corner radius).
+      </p>
+
+      <h2>Conditional visibility and calculated fields</h2>
+      <p>
+        The Logic tab lets a field&apos;s visibility depend on another field&apos;s answer: &quot;only show this
+        field if…&quot;, with one or more conditions (equals, contains, greater/less than, is empty/not empty),
+        combined with either <em>all</em> or <em>any</em>. A hidden field is never required and never submitted — a
+        question the respondent was never asked isn&apos;t part of their answer.
+      </p>
+      <p>
+        A number field can also be set to calculate its own value from other number fields — a formula like{" "}
+        <code>seats * price_per_seat</code> using the other fields&apos; ids (click a field&apos;s chip in the Logic
+        tab to insert its id). Supports +, −, ×, ÷, and parentheses. The field becomes read-only and updates live as
+        its inputs change. The server always recomputes the value itself before saving a submission, so a tampered
+        request can never post a fake total.
       </p>
 
       <h2>Undo, redo, and the Theme button</h2>
@@ -181,7 +197,10 @@ export default function BuilderDocsPage() {
 
       <h2>What&apos;s not built yet</h2>
       <ul>
-        <li>The Logic tab is a placeholder — conditional visibility and calculated fields are a later phase.</li>
+        <li>
+          Calculated fields are arithmetic only (+, −, ×, ÷) and only target a number field — no string
+          concatenation, dates, or cross-field lookups beyond simple formulas.
+        </li>
         <li>
           Fields are one per row for now; multi-column layouts are set through a field&apos;s Style tab (a numeric
           width from 1 to 12), not by dragging fields side by side.

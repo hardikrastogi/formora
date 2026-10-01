@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { FormDefinitionSchema } from "@hardikrastogi/core";
+import { FormDefinitionSchema, applyCalculatedFields } from "@hardikrastogi/core";
 import { collectServerErrors } from "@hardikrastogi/react/server";
 import { connectToDatabase } from "@/lib/db/connect";
 import { FormModel } from "@/lib/db/models/Form";
@@ -92,11 +92,16 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
     }
   }
 
+  // Never trust the browser for a calculated field's value either — recompute
+  // it from the submitted inputs and overwrite whatever was actually posted,
+  // the same way collectServerErrors re-runs every other check server-side.
+  const resolvedAnswers = applyCalculatedFields(parsedDefinition.data, answers as Record<string, unknown>);
+
   // Never trust the browser: re-run the exact same checks it already ran —
   // core's required/min/max/pattern rules AND the built-in email/url format
   // checks, the same combination FormRenderer uses client-side. A form using
   // a custom field type registered only in the browser can't be re-checked here.
-  const errors = collectServerErrors(parsedDefinition.data, answers as Record<string, unknown>);
+  const errors = collectServerErrors(parsedDefinition.data, resolvedAnswers);
   if (Object.keys(errors).length > 0) {
     return NextResponse.json({ errors }, { status: 422 });
   }
@@ -111,11 +116,11 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
       formId: form._id,
       formVersionId: version._id,
       schemaVersion: parsedDefinition.data.schemaVersion,
-      answers,
+      answers: resolvedAnswers,
       idempotencyKey,
       respondentIdentityId,
       editTokenHash: hashToken(editToken),
-      searchText: computeSearchText(answers as Record<string, unknown>),
+      searchText: computeSearchText(resolvedAnswers),
     });
     return NextResponse.json({ submissionId: String(submission._id), editToken }, { status: 201 });
   } catch (error) {

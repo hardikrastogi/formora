@@ -81,6 +81,91 @@ describe("Builder", () => {
     expect(screen.getByLabelText("Minimum value")).toBeInTheDocument();
   });
 
+  it("Logic tab: enabling conditional visibility defaults to a condition on the other field, editable and removable", async () => {
+    const user = userEvent.setup();
+    renderBuilder("logic_visibility");
+    await user.click(screen.getByRole("button", { name: "Add Checkbox field" }));
+    await user.click(screen.getByRole("button", { name: "Add Text field" }));
+    // The just-added Text field is already selected.
+    await user.click(screen.getByRole("tab", { name: "Logic" }));
+
+    await user.click(screen.getByRole("checkbox", { name: "Only show this field conditionally" }));
+    expect(screen.getByLabelText("Field to check")).toHaveValue("checkbox_1");
+    expect(screen.getByLabelText("Comparison")).toHaveValue("isNotEmpty");
+
+    await waitFor(() => {
+      const stored = JSON.parse(window.localStorage.getItem("formora-builder:logic_visibility") ?? "null");
+      expect(stored.logic.visibility).toEqual([
+        { targetFieldId: "text_1", match: "all", conditions: [{ fieldId: "checkbox_1", operator: "isNotEmpty" }] },
+      ]);
+    });
+
+    await user.selectOptions(screen.getByLabelText("Comparison"), "equals");
+    await user.click(screen.getByLabelText("Value"));
+    await user.selectOptions(screen.getByLabelText("Value"), "Checked");
+
+    await waitFor(() => {
+      const stored = JSON.parse(window.localStorage.getItem("formora-builder:logic_visibility") ?? "null");
+      expect(stored.logic.visibility[0].conditions[0]).toEqual({ fieldId: "checkbox_1", operator: "equals", value: true });
+    });
+
+    // Unchecking clears the rule entirely.
+    await user.click(screen.getByRole("checkbox", { name: "Only show this field conditionally" }));
+    await waitFor(() => {
+      const stored = JSON.parse(window.localStorage.getItem("formora-builder:logic_visibility") ?? "null");
+      expect(stored.logic.visibility).toEqual([]);
+    });
+  });
+
+  it("Logic tab: the visibility toggle is disabled with nothing else on the form to reference", async () => {
+    const user = userEvent.setup();
+    renderBuilder();
+    await user.click(screen.getByRole("button", { name: "Add Text field" }));
+    await user.click(screen.getByRole("tab", { name: "Logic" }));
+    expect(screen.getByRole("checkbox", { name: "Only show this field conditionally" })).toBeDisabled();
+    expect(screen.getByText(/Add another field first/)).toBeInTheDocument();
+  });
+
+  it("Logic tab: calculated value composes a formula from inserted fields and saves it", async () => {
+    const user = userEvent.setup();
+    renderBuilder("logic_calculated");
+    await user.click(screen.getByRole("button", { name: "Add Number field" }));
+    await user.clear(screen.getByLabelText("Label"));
+    await user.type(screen.getByLabelText("Label"), "Seats");
+
+    await user.click(screen.getByRole("button", { name: "Add Number field" }));
+    await user.clear(screen.getByLabelText("Label"));
+    await user.type(screen.getByLabelText("Label"), "Price per seat");
+
+    await user.click(screen.getByRole("button", { name: "Add Number field" }));
+    await user.clear(screen.getByLabelText("Label"));
+    await user.type(screen.getByLabelText("Label"), "Total");
+    // "Total" (number_3) is already selected after being added.
+    await user.click(screen.getByRole("tab", { name: "Logic" }));
+
+    await user.click(screen.getByRole("checkbox", { name: "Calculate this value automatically" }));
+    expect(screen.getByLabelText("Formula")).toHaveValue("number_1");
+
+    await user.click(screen.getByRole("button", { name: "Price per seat" }));
+    expect(screen.getByLabelText("Formula")).toHaveValue("number_1 number_2");
+
+    await user.clear(screen.getByLabelText("Formula"));
+    await user.type(screen.getByLabelText("Formula"), "number_1 * number_2");
+
+    await waitFor(() => {
+      const stored = JSON.parse(window.localStorage.getItem("formora-builder:logic_calculated") ?? "null");
+      expect(stored.logic.calculated).toEqual([
+        { targetFieldId: "number_3", inputs: ["number_1", "number_2"], formula: "number_1 * number_2" },
+      ]);
+    });
+
+    await user.click(screen.getByRole("checkbox", { name: "Calculate this value automatically" }));
+    await waitFor(() => {
+      const stored = JSON.parse(window.localStorage.getItem("formora-builder:logic_calculated") ?? "null");
+      expect(stored.logic.calculated).toEqual([]);
+    });
+  });
+
   it("deleting a field removes it from the canvas and clears the selection", async () => {
     const user = userEvent.setup();
     renderBuilder();

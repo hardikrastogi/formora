@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { produce } from "immer";
-import type { FieldConfig, FormDefinition } from "@hardikrastogi/core";
+import type { CalculatedField, FieldConfig, FormDefinition, VisibilityRule } from "@hardikrastogi/core";
 
 const HISTORY_LIMIT = 50;
 
@@ -28,6 +28,10 @@ interface BuilderActions {
   updateField: (fieldId: string, patch: Partial<FieldConfig>) => void;
   reorderFields: (fieldId: string, overFieldId: string) => void;
   setFieldSpan: (fieldId: string, span: number) => void;
+  /** Replaces the one visibility rule for this target field; pass null to clear it. */
+  setVisibilityRule: (targetFieldId: string, rule: VisibilityRule | null) => void;
+  /** Replaces the one calculated-value formula for this target field; pass null to clear it. */
+  setCalculatedField: (targetFieldId: string, calc: CalculatedField | null) => void;
   select: (fieldId: string | null) => void;
   setMode: (mode: "edit" | "preview") => void;
   setTheme: (patch: Partial<FormDefinition["theme"]>) => void;
@@ -111,7 +115,17 @@ export function createBuilderStore(initial: FormDefinition, startDirty = false) 
         commit((draft) => {
           draft.fields = draft.fields.filter((f) => f.id !== fieldId);
           draft.layout = withoutFieldFromLayout(draft, fieldId);
-          draft.logic.visibility = draft.logic.visibility.filter((r) => r.targetFieldId !== fieldId);
+          // A rule/formula can reference the removed field as its target, as
+          // one of its conditions, or as one of its inputs — strip all three,
+          // then drop anything left with nothing to evaluate.
+          draft.logic.visibility = draft.logic.visibility
+            .filter((r) => r.targetFieldId !== fieldId)
+            .map((r) => ({ ...r, conditions: r.conditions.filter((c) => c.fieldId !== fieldId) }))
+            .filter((r) => r.conditions.length > 0);
+          draft.logic.calculated = draft.logic.calculated
+            .filter((c) => c.targetFieldId !== fieldId)
+            .map((c) => ({ ...c, inputs: c.inputs.filter((i) => i !== fieldId) }))
+            .filter((c) => c.inputs.length > 0);
         });
         if (get().selectedFieldId === fieldId) set({ selectedFieldId: null });
       },
@@ -140,6 +154,18 @@ export function createBuilderStore(initial: FormDefinition, startDirty = false) 
             const col = row.columns.find((c) => c.fieldId === fieldId);
             if (col) col.span = Math.min(12, Math.max(1, span));
           }
+        }),
+
+      setVisibilityRule: (targetFieldId, rule) =>
+        commit((draft) => {
+          draft.logic.visibility = draft.logic.visibility.filter((r) => r.targetFieldId !== targetFieldId);
+          if (rule) draft.logic.visibility.push(rule);
+        }),
+
+      setCalculatedField: (targetFieldId, calc) =>
+        commit((draft) => {
+          draft.logic.calculated = draft.logic.calculated.filter((c) => c.targetFieldId !== targetFieldId);
+          if (calc) draft.logic.calculated.push(calc);
         }),
 
       select: (fieldId) => set({ selectedFieldId: fieldId }),

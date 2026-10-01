@@ -233,8 +233,8 @@ Tracked here so these gaps are fixed as the hosted product progresses. They are 
 
 ## Phase 6 — Conditional Logic + `@hardikrastogi/kyc` (Weeks 23–27)
 
-- [ ] `visibleIf` conditional field visibility, wired into both renderer and builder Logic tab
-- [ ] Calculated fields (derived values from other answers)
+- [x] `visibleIf` conditional field visibility, wired into both the renderer and the builder's Logic tab. A field with one or more visibility rules is visible only if all its rules pass (match `all`/`any` within each rule); otherwise every field defaults to visible. Enforced in three independent places so the client is never trusted alone: the renderer live (hides the field, drops its answer from what's submitted), the resolver (a hidden field is never required), and the server (`validateSubmission`/`collectServerErrors` recompute visibility from the submitted answers themselves before validating)
+- [x] Calculated fields: a number field's value derived from other number fields via a small, deliberately non-`eval` arithmetic formula language (+, −, ×, ÷, parentheses, field ids as identifiers — chaining one calculated field off another is supported; a cyclic dependency resolves to no value rather than looping). The field renders read-only and updates live as its inputs change. The server always recomputes it from the submitted inputs before saving, overwriting whatever the client actually posted — a tampered request can never post a fake total
 - [ ] `@hardikrastogi/kyc` package scaffold (scope reduced — see note below)
   - [ ] `VerificationProvider` interface + mock provider
   - [ ] Document image upload field type, with blur/glare detection

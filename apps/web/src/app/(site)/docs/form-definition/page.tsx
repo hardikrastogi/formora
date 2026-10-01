@@ -194,16 +194,21 @@ export default function FormDefinitionPage() {
       </p>
 
       <h2>logic</h2>
-      <p className="callout">
-        Logic is stored and validated (a rule pointing at a field that does not exist is rejected), but the renderer
-        does not apply it yet. Treat it as reserved for now.
-      </p>
       <p>
         <code>visibility</code> rules hide or show a <code>targetFieldId</code> based on <code>conditions</code>{" "}
         (<code>fieldId</code>, an <code>operator</code> such as <code>equals</code>, <code>notEquals</code>,{" "}
         <code>contains</code>, <code>greaterThan</code>, <code>lessThan</code>, <code>isEmpty</code>,{" "}
         <code>isNotEmpty</code>, and a <code>value</code>), combined with <code>match</code> of <code>all</code> or{" "}
-        <code>any</code>. <code>calculated</code> entries derive a value from other fields via a <code>formula</code>.
+        <code>any</code>. A field referenced by a rule or targeted by it must exist, or the definition is rejected. A
+        hidden field is never required and its answer is dropped before submission — the renderer applies this live,
+        and the server re-applies it independently rather than trusting the client.
+      </p>
+      <p>
+        <code>calculated</code> entries derive a number field&apos;s value from other number fields via a{" "}
+        <code>formula</code> (a small, safe arithmetic language: +, −, ×, ÷, parentheses, and field ids as
+        identifiers — no arbitrary code execution, since the formula is authored by the form&apos;s creator but runs
+        in the respondent&apos;s browser). The target field renders read-only. The server recomputes it from the
+        submitted inputs before saving, overwriting whatever the client actually posted.
       </p>
 
       <h2>Validation errors</h2>

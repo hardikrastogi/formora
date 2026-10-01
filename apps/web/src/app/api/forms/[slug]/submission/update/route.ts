@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { FormDefinitionSchema } from "@hardikrastogi/core";
+import { FormDefinitionSchema, applyCalculatedFields } from "@hardikrastogi/core";
 import { collectServerErrors } from "@hardikrastogi/react/server";
 import { connectToDatabase } from "@/lib/db/connect";
 import { FormModel } from "@/lib/db/models/Form";
@@ -68,13 +68,14 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
     return NextResponse.json({ error: "This form's definition is corrupted." }, { status: 500 });
   }
 
-  const errors = collectServerErrors(parsedDefinition.data, answers as Record<string, unknown>);
+  const resolvedAnswers = applyCalculatedFields(parsedDefinition.data, answers as Record<string, unknown>);
+  const errors = collectServerErrors(parsedDefinition.data, resolvedAnswers);
   if (Object.keys(errors).length > 0) {
     return NextResponse.json({ errors }, { status: 422 });
   }
 
-  submission.answers = answers;
-  submission.searchText = computeSearchText(answers as Record<string, unknown>);
+  submission.answers = resolvedAnswers;
+  submission.searchText = computeSearchText(resolvedAnswers);
   submission.revisionNumber += 1;
   // The edit is now validated against, and counted as belonging to,
   // whichever version is live today — same as a fresh submission would be.

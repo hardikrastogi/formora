@@ -1,5 +1,6 @@
 import * as Tabs from "@radix-ui/react-tabs";
-import type { ChangeEvent } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
+import { extractFormulaIdentifiers, type Condition, type FieldConfig, type VisibilityRule } from "@hardikrastogi/core";
 import { useBuilder } from "./context";
 import { contrastAgainstWhite, WCAG_AA_NORMAL_TEXT } from "./contrast";
 
@@ -127,13 +128,284 @@ function ValidationTab() {
   );
 }
 
+const OPERATORS: { value: Condition["operator"]; label: string }[] = [
+  { value: "equals", label: "is" },
+  { value: "notEquals", label: "is not" },
+  { value: "contains", label: "contains" },
+  { value: "greaterThan", label: "is greater than" },
+  { value: "lessThan", label: "is less than" },
+  { value: "isEmpty", label: "is empty" },
+  { value: "isNotEmpty", label: "is not empty" },
+];
+
+function optionValue(option: unknown): { label: string; value: string } | null {
+  if (typeof option === "string") return { label: option, value: option };
+  if (option && typeof option === "object" && "value" in option) {
+    const o = option as { label?: unknown; value: unknown };
+    return { label: typeof o.label === "string" ? o.label : String(o.value), value: String(o.value) };
+  }
+  return null;
+}
+
+function ConditionRow({
+  condition,
+  otherFields,
+  onChange,
+  onRemove,
+}: {
+  condition: Condition;
+  otherFields: FieldConfig[];
+  onChange: (patch: Partial<Condition>) => void;
+  onRemove: () => void;
+}) {
+  const referenced = otherFields.find((f) => f.id === condition.fieldId);
+  const needsValue = condition.operator !== "isEmpty" && condition.operator !== "isNotEmpty";
+  const options = Array.isArray(referenced?.defaultProps.options)
+    ? (referenced.defaultProps.options as unknown[]).map(optionValue).filter((o): o is { label: string; value: string } => o !== null)
+    : null;
+
+  return (
+    <div className="fb-condition-row">
+      <select
+        aria-label="Field to check"
+        value={condition.fieldId}
+        onChange={(e) => onChange({ fieldId: e.target.value, value: undefined })}
+      >
+        {otherFields.map((f) => (
+          <option key={f.id} value={f.id}>
+            {f.label}
+          </option>
+        ))}
+      </select>
+      <select
+        aria-label="Comparison"
+        value={condition.operator}
+        onChange={(e) => onChange({ operator: e.target.value as Condition["operator"] })}
+      >
+        {OPERATORS.map((op) => (
+          <option key={op.value} value={op.value}>
+            {op.label}
+          </option>
+        ))}
+      </select>
+      {needsValue &&
+        (options ? (
+          <select
+            aria-label="Value"
+            value={typeof condition.value === "string" ? condition.value : ""}
+            onChange={(e) => onChange({ value: e.target.value })}
+          >
+            <option value="">Choose…</option>
+            {options.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        ) : referenced?.type === "checkbox" ? (
+          <select
+            aria-label="Value"
+            value={condition.value === true ? "true" : "false"}
+            onChange={(e) => onChange({ value: e.target.value === "true" })}
+          >
+            <option value="true">Checked</option>
+            <option value="false">Unchecked</option>
+          </select>
+        ) : (
+          <input
+            aria-label="Value"
+            value={typeof condition.value === "string" || typeof condition.value === "number" ? String(condition.value) : ""}
+            onChange={(e) => onChange({ value: e.target.value })}
+          />
+        ))}
+      <button type="button" className="fb-canvas-delete" onClick={onRemove} aria-label="Remove condition">
+        ×
+      </button>
+    </div>
+  );
+}
+
+function VisibilitySection({
+  field,
+  otherFields,
+  rule,
+  onChange,
+}: {
+  field: FieldConfig;
+  otherFields: FieldConfig[];
+  rule: VisibilityRule | null;
+  onChange: (rule: VisibilityRule | null) => void;
+}) {
+  const enabled = rule !== null;
+
+  function toggle(checked: boolean) {
+    if (!checked || otherFields.length === 0) {
+      onChange(null);
+      return;
+    }
+    onChange({ targetFieldId: field.id, match: "all", conditions: [{ fieldId: otherFields[0].id, operator: "isNotEmpty" }] });
+  }
+
+  function updateCondition(index: number, patch: Partial<Condition>) {
+    if (!rule) return;
+    onChange({ ...rule, conditions: rule.conditions.map((c, i) => (i === index ? { ...c, ...patch } : c)) });
+  }
+
+  function addCondition() {
+    if (!rule || otherFields.length === 0) return;
+    onChange({ ...rule, conditions: [...rule.conditions, { fieldId: otherFields[0].id, operator: "isNotEmpty" }] });
+  }
+
+  function removeCondition(index: number) {
+    if (!rule) return;
+    const conditions = rule.conditions.filter((_, i) => i !== index);
+    onChange(conditions.length === 0 ? null : { ...rule, conditions });
+  }
+
+  return (
+    <div className="fb-logic-section">
+      <label className="fb-field fb-field-checkbox">
+        <input
+          type="checkbox"
+          checked={enabled}
+          disabled={otherFields.length === 0}
+          onChange={(e) => toggle(e.target.checked)}
+        />
+        <span>Only show this field conditionally</span>
+      </label>
+      {otherFields.length === 0 && (
+        <p className="fb-inspector-placeholder">Add another field first to set up conditional visibility.</p>
+      )}
+      {enabled && rule && (
+        <>
+          {rule.conditions.length > 1 && (
+            <label className="fb-field">
+              <span>Show when</span>
+              <select value={rule.match} onChange={(e) => onChange({ ...rule, match: e.target.value as "all" | "any" })}>
+                <option value="all">All conditions match</option>
+                <option value="any">Any condition matches</option>
+              </select>
+            </label>
+          )}
+          {rule.conditions.map((condition, index) => (
+            <ConditionRow
+              key={index}
+              condition={condition}
+              otherFields={otherFields}
+              onChange={(patch) => updateCondition(index, patch)}
+              onRemove={() => removeCondition(index)}
+            />
+          ))}
+          <button type="button" className="fb-add-condition" onClick={addCondition}>
+            + Add condition
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+function CalculatedSection({
+  field,
+  numberFields,
+  formula,
+  onChange,
+}: {
+  field: FieldConfig;
+  numberFields: FieldConfig[];
+  formula: string | null;
+  onChange: (formula: string | null, inputs: string[]) => void;
+}) {
+  const [text, setText] = useState(formula ?? "");
+  useEffect(() => setText(formula ?? ""), [formula]);
+  const enabled = formula !== null;
+  const validIds = new Set(numberFields.map((f) => f.id));
+
+  function toggle(checked: boolean) {
+    if (!checked || numberFields.length === 0) {
+      onChange(null, []);
+      return;
+    }
+    const initial = numberFields[0].id;
+    setText(initial);
+    onChange(initial, [initial]);
+  }
+
+  function commit(value: string) {
+    setText(value);
+    // Only identifiers that are actually a real number field count as inputs
+    // — a formula mid-typed into a garbage state never gets saved with a
+    // garbage input, which the schema would otherwise reject outright.
+    const inputs = extractFormulaIdentifiers(value).filter((id) => validIds.has(id));
+    if (inputs.length > 0) onChange(value, inputs);
+  }
+
+  function insertField(id: string) {
+    commit(text ? `${text} ${id}` : id);
+  }
+
+  return (
+    <div className="fb-logic-section">
+      <label className="fb-field fb-field-checkbox">
+        <input
+          type="checkbox"
+          checked={enabled}
+          disabled={numberFields.length === 0}
+          onChange={(e) => toggle(e.target.checked)}
+        />
+        <span>Calculate this value automatically</span>
+      </label>
+      {numberFields.length === 0 && <p className="fb-inspector-placeholder">Add another number field first.</p>}
+      {enabled && (
+        <>
+          <label className="fb-field">
+            <span>Formula</span>
+            <input value={text} onChange={(e) => commit(e.target.value)} placeholder="e.g. seats * price_per_seat" />
+          </label>
+          <div className="fb-logic-chips">
+            {numberFields.map((f) => (
+              <button key={f.id} type="button" className="fb-logic-chip" onClick={() => insertField(f.id)}>
+                {f.label}
+              </button>
+            ))}
+          </div>
+          <p className="fb-inspector-placeholder">Supports + − × ÷ and parentheses. Click a field above to insert it.</p>
+        </>
+      )}
+    </div>
+  );
+}
+
 function LogicTab() {
+  const definition = useBuilder((s) => s.definition);
+  const selectedFieldId = useBuilder((s) => s.selectedFieldId)!;
+  const setVisibilityRule = useBuilder((s) => s.setVisibilityRule);
+  const setCalculatedField = useBuilder((s) => s.setCalculatedField);
+  const field = definition.fields.find((f) => f.id === selectedFieldId)!;
+
+  const otherFields = definition.fields.filter((f) => f.id !== selectedFieldId);
+  const numberFields = otherFields.filter((f) => f.type === "number");
+  const rule = definition.logic.visibility.find((r) => r.targetFieldId === selectedFieldId) ?? null;
+  const calc = definition.logic.calculated.find((c) => c.targetFieldId === selectedFieldId) ?? null;
+
   return (
     <div className="fb-inspector-tab">
-      <p className="fb-inspector-placeholder">
-        Conditional visibility and calculated fields are coming in a later phase. The rules can already be stored in
-        the form&apos;s JSON — this tab will let you build them without writing JSON by hand.
-      </p>
+      <VisibilitySection
+        field={field}
+        otherFields={otherFields}
+        rule={rule}
+        onChange={(next) => setVisibilityRule(field.id, next)}
+      />
+      {field.type === "number" && (
+        <CalculatedSection
+          field={field}
+          numberFields={numberFields}
+          formula={calc?.formula ?? null}
+          onChange={(formula, inputs) =>
+            setCalculatedField(field.id, formula ? { targetFieldId: field.id, inputs, formula } : null)
+          }
+        />
+      )}
     </div>
   );
 }
