@@ -157,7 +157,7 @@ test.describe("Phase 5 hardening: health endpoints, maxResponses, limitOneRespon
   test("the builder UI sets max responses and the one-per-respondent toggle, both persisted", async ({ page }) => {
     await openNewBuilder(page, "limits-ui");
     await page.getByLabel("Form name").fill("Limits UI Test");
-    await page.getByRole("button", { name: "Add Text field" }).click();
+    await page.getByRole("option", { name: "Add Text field" }).click();
     await openBuilderSettings(page);
 
     const checkbox = page.getByRole("checkbox", { name: "Only one response per respondent" });

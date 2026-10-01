@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
 interface AccountInfo {
@@ -86,6 +87,7 @@ function EmailSection({ currentEmail }: { currentEmail: string }) {
         throw new Error(body.error ?? "Could not start the email change.");
       }
       setSentTo(newEmail);
+      toast.success("Confirmation link sent");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not start the email change.");
     } finally {
@@ -146,6 +148,7 @@ function PasswordSection({ hasPassword, onRemoved }: { hasPassword: boolean; onR
         throw new Error(body.error ?? "Could not remove your password.");
       }
       onRemoved();
+      toast.success("Password removed");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not remove your password.");
     } finally {
@@ -205,6 +208,7 @@ function GoogleSection({
         throw new Error(body.error ?? "Could not disconnect Google.");
       }
       onDisconnected();
+      toast.success("Google disconnected");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not disconnect Google.");
     } finally {

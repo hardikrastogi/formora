@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { Builder, createBlankDefinition, type PublishResult } from "@hardikrastogi/builder";
 import "@hardikrastogi/builder/styles.css";
 import type { FormDefinition } from "@hardikrastogi/core";
@@ -96,6 +97,7 @@ export function BuilderPage({
     });
     if (!res.ok) throw new Error(await errorMessage(res, "Could not publish this form. Please try again."));
     const data = (await res.json()) as { url: string; slug: string };
+    toast.success("Form published");
     return { url: data.url, slug: data.slug };
   }
 
@@ -103,6 +105,7 @@ export function BuilderPage({
     if (!published.slug) throw new Error("Cannot unpublish: this form's link is missing its slug.");
     const res = await fetch(`/api/forms/${encodeURIComponent(published.slug)}/unpublish`, { method: "POST" });
     if (!res.ok) throw new Error(await errorMessage(res, "Could not unpublish this form. Please try again."));
+    toast.success("Form unpublished");
   }
 
   return (

@@ -362,7 +362,7 @@ test.describe("Phase 5c: verified-email respondents", () => {
   }) => {
     await openNewBuilder(page, "modeui");
     await page.getByLabel("Form name").fill("Chosen In Builder");
-    await page.getByRole("button", { name: "Add Text field" }).click();
+    await page.getByRole("option", { name: "Add Text field" }).click();
     await openBuilderSettings(page);
     await page.getByLabel("Who can respond").selectOption("verified_email");
     await closeBuilderSettings(page);
