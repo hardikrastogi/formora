@@ -206,6 +206,23 @@ describe("FormRenderer", () => {
     expect(container.querySelector("form")!.style.getPropertyValue("--df-form-padding")).toBe("1.25rem");
   });
 
+  it("shows no accent border by default, even when a primary colour is set", () => {
+    const { container } = render(
+      <FormRenderer definition={definition({ theme: { colors: { primary: "#ff0000" } } })} />,
+    );
+    const form = container.querySelector("form")!;
+    // A primary colour alone must not turn the border on — only accentBorder does.
+    expect(form.style.getPropertyValue("--df-primary")).toBe("#ff0000");
+    expect(form.style.getPropertyValue("--df-form-border-width")).toBe("");
+  });
+
+  it("sets the accent border width only when theme.accentBorder is true", () => {
+    const { container } = render(
+      <FormRenderer definition={definition({ theme: { accentBorder: true, colors: { primary: "#ff0000" } } })} />,
+    );
+    expect(container.querySelector("form")!.style.getPropertyValue("--df-form-border-width")).toBe("1px");
+  });
+
   it("lets consumers add class names per slot", () => {
     const { container } = render(
       <FormRenderer definition={definition()} classNames={{ form: "my-form", input: "my-input", submit: "my-submit" }} />,

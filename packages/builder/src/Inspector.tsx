@@ -501,6 +501,14 @@ function ThemeTab() {
           <option value="spacious">Spacious</option>
         </select>
       </label>
+      <label className="fb-field fb-field-checkbox">
+        <input
+          type="checkbox"
+          checked={theme.accentBorder ?? false}
+          onChange={(e) => setTheme({ accentBorder: e.target.checked })}
+        />
+        <span>Show an accent border and heading underline in this colour</span>
+      </label>
     </div>
   );
 }

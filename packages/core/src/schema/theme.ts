@@ -13,6 +13,11 @@ export const ThemeSchema = z
     radius: z.enum(["none", "sm", "md", "lg", "full"]).default("md"),
     font: z.string().default("Inter"),
     density: z.enum(["compact", "comfortable", "spacious"]).default("comfortable"),
+    // Off by default — colors.primary always has a value (even when the
+    // creator never touched the theme), so an accent border/heading driven
+    // by it must be an explicit opt-in, not something every form shows
+    // unasked just because a default color exists.
+    accentBorder: z.boolean().default(false),
   })
   .partial()
   .default({});
