@@ -30,9 +30,15 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     return NextResponse.json({ error: "'to' must be a valid date." }, { status: 400 });
   }
 
+  const offsetParam = url.searchParams.get("offset");
+  const offset = offsetParam ? Number(offsetParam) : 0;
+  if (!Number.isInteger(offset) || offset < 0) {
+    return NextResponse.json({ error: "'offset' must be a non-negative integer." }, { status: 400 });
+  }
+
   const result = await listResponses({
     formId: form._id,
-    cursor: url.searchParams.get("cursor"),
+    offset,
     limit: limitParam ? Number(limitParam) : RESPONSES_DEFAULT_LIMIT,
     search: url.searchParams.get("search"),
     sort: sortParam === "asc" ? "asc" : "desc",
@@ -57,7 +63,7 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     {
       fields,
       totalCount: result.totalCount,
-      nextCursor: result.nextCursor,
+      hasMore: result.hasMore,
       responses: result.rows.map((r) => ({
         id: String(r._id),
         submittedAt: r.submittedAt,
