@@ -246,8 +246,8 @@
   height: 2.5rem;
   padding: 3px;
   border-radius: 9999px;
-  background: var(--foreground);
-  border: 1px solid var(--background);
+  background: var(--background);
+  border: 1px solid var(--border);
 }
 .pill-nav-item {
   position: relative;
@@ -258,6 +258,7 @@
   padding: 0 1.1rem;
   border-radius: 9999px;
   background: var(--background);
+  border: 1px solid var(--border);
   font-size: 0.8125rem;
   font-weight: 600;
   overflow: hidden;
