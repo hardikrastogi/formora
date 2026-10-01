@@ -247,6 +247,7 @@
   padding: 3px;
   border-radius: 9999px;
   background: var(--foreground);
+  border: 1px solid var(--background);
 }
 .pill-nav-item {
   position: relative;
