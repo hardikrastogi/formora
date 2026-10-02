@@ -1,0 +1,110 @@
+/* No CSS shipped with the pasted SquishSwitch component — this is written to
+   match its variable names/classes. The motion-driven squash/stretch and the
+   thumb's x-position are both set inline via framer-motion's style prop; this
+   file only needs to size the track/thumb and crossfade their colors. */
+.squish-switch-root {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.squish-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.squish-switch[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.squish-switch:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+  border-radius: var(--ss-r);
+}
+
+.squish-switch__track {
+  position: relative;
+  display: block;
+  width: var(--ss-w);
+  height: var(--ss-h);
+  border-radius: var(--ss-r);
+  background: var(--ss-track);
+  /* The track color is a theme token chosen for contrast against the page
+     background, not a fixed dark/light pair — close enough in tone to the
+     header (var(--muted) on var(--background)) that without a border the
+     switch all but disappears. */
+  border: 1px solid var(--border);
+  transition: background-color var(--ss-fade) ease, border-color var(--ss-fade) ease;
+}
+.squish-switch[data-on] .squish-switch__track {
+  background: var(--ss-track-on);
+  border-color: var(--ss-track-on);
+}
+
+.squish-switch__thumb {
+  position: absolute;
+  top: var(--ss-inset);
+  left: 0;
+  width: var(--ss-thumb);
+  height: var(--ss-thumb);
+  border-radius: var(--ss-thumb-r);
+  background: var(--ss-thumb-color);
+  transition: background-color var(--ss-fade) ease;
+  will-change: transform;
+}
+.squish-switch[data-on] .squish-switch__thumb {
+  background: var(--ss-thumb-on);
+}
+
+.squish-switch__icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.6) rotate(-30deg);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.squish-switch__icon--off {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+.squish-switch[data-on] .squish-switch__icon--off {
+  opacity: 0;
+  transform: scale(0.6) rotate(30deg);
+}
+.squish-switch[data-on] .squish-switch__icon--on {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+.squish-switch__icon svg {
+  width: 60%;
+  height: 60%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .squish-switch__icon {
+    transition: none;
+  }
+}
+
+.squish-switch__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .squish-switch__track,
+  .squish-switch__thumb {
+    transition: none;
+  }
+}

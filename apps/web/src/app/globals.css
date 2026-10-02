@@ -49,6 +49,12 @@
 }
 
 :root {
+  --home-background: oklch(95.835% 0.0086 16.611);
+  /* The box-grid's hover fill (.hero-boxes > div:hover) — must stay an exact
+     black/white (not a themed token) so .hero-blend's mix-blend-mode trick
+     inverts cleanly: light mode text diffs to white against a black box,
+     dark mode text diffs to black against a white one. */
+  --hero-box-hover: black;
   /* A warm, paper-like neutral palette — not flat black/white, a faint
      beige/cream undertone (hue ~65-75, very low chroma) throughout. */
   --background: oklch(0.985 0.004 75);
@@ -86,6 +92,13 @@
 }
 
 .dark {
+  /* Same dark charcoal as --background below — the homepage hero/header/
+     footer/template-cards read this custom token instead of --background
+     (see the body:has(.home-page) rule further down), and it had no dark
+     override at all, so toggling dark mode never actually changed what the
+     homepage looks like. */
+  --home-background: oklch(0.16 0.008 60);
+  --hero-box-hover: white;
   --background: oklch(0.16 0.008 60);
   --foreground: oklch(0.96 0.006 75);
   --card: oklch(0.21 0.009 60);
@@ -131,6 +144,27 @@
   }
 }
 
+/* A subtle cross-fade when toggling light/dark, applied broadly instead of
+   tagging every themed element individually — switching .dark on <html>
+   recomputes every CSS variable instantly, and without this every color on
+   the page would snap at once. Scoped out of anything that needs to feel
+   instant (the box-grid's own hover fill already sets its own
+   transition-duration: 0s and wins by specificity; the switch thumb's
+   position is driven by framer-motion inline styles, untouched by this). */
+*,
+*::before,
+*::after {
+  transition: background-color 220ms ease, color 220ms ease, border-color 220ms ease, fill 220ms ease, stroke 220ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none;
+  }
+}
+
 /* Homepage hero: a grid of boxes that highlight individually under the
    cursor (inspired by Aceternity's Background Boxes, hand-built in plain
    CSS — a per-cell :hover transition needs no JS or animation library),
@@ -140,32 +174,60 @@
    (not auto-fill) keeps every row fully covered regardless of viewport
    width. All neutralized under prefers-reduced-motion where relevant. */
 .hero-bg {
-  background: oklch(0.965 0.006 72);
+  background: var(--home-background);
+  isolation: isolate;
+}
+.home-page {
+  background: var(--home-background);
+}
+body:has(.home-page) .site-header,
+body:has(.home-page) .site-footer {
+  background: var(--home-background);
 }
 .hero-boxes-mask {
   position: absolute;
-  inset: 0;
+  inset: -90;
   z-index: 0;
   overflow: hidden;
   -webkit-mask-image: radial-gradient(ellipse 55% 60% at 50% 35%, black 0%, transparent 75%);
-  mask-image: radial-gradient(ellipse 55% 60% at 50% 35%, black 0%, transparent 75%);
+  mask-image: radial-gradient(ellipse 50% 90% at 50% 50%, rgb(53, 51, 51) 0%, transparent 75%);
 }
 .hero-boxes {
   position: absolute;
   inset: -30% -10%;
   display: grid;
-  grid-template-columns: repeat(40, 1fr);
-  grid-auto-rows: 2.25rem;
-  transform: perspective(900px) rotateX(50deg) scale(1.4);
-  transform-origin: center 15%;
+  grid-template-columns: repeat(40, -30fr);
+  grid-auto-rows: 2.5rem;
+  transform: perspective(600px) rotateX(59deg) scale(1.5) rotateZ(50deg) rotateY(0deg);
+  transform-origin: center 40%;
 }
 .hero-boxes > div {
-  border: 1px solid color-mix(in oklch, var(--border), transparent 55%);
+  border: 1px solid color-mix(in oklch, var(--border), transparent 60%);
   transition: background-color 0.4s ease;
 }
 .hero-boxes > div:hover {
-  background-color: var(--foreground);
-  transition-duration: 0s;
+  /* var(--hero-box-hover), not var(--foreground) (a dark charcoal, not true
+     black/white) — .hero-blend's mix-blend-mode: difference needs an exact
+     black/white backdrop to invert text cleanly; anything else leaves it
+     gray. Black in light mode, white in dark mode (see the :root/.dark
+     definitions of --hero-box-hover above). */
+  background-color: var(--hero-box-hover);
+  transition-duration: 0.2s;
+}
+
+/* The box-grid's hover highlight (.hero-boxes > div:hover, above) is the same
+   black as this text, so wherever the highlight's edge sweeps under a word it
+   visually disappears into it. Fixed with a pure-CSS mix-blend-mode trick,
+   not JS cursor-tracking: paint the text white and let the browser invert it
+   against whatever's painted directly behind it in the same stacking context
+   (the hero section's own background, or a hovered black box). Over the
+   light page background that reads as near-black; over a black box it reads
+   as white — flipping live as the highlight moves, with no extra logic. */
+.hero-blend {
+  position: relative;
+  z-index: 1;
+  color: rgb(255, 255, 255);
+  mix-blend-mode: difference;
 }
 
 .hero-word {
@@ -176,7 +238,7 @@
 @keyframes hero-word-in {
   from {
     opacity: 0;
-    transform: translateY(0.4em);
+    transform: translateY(1.4em);
   }
   to {
     opacity: 1;
