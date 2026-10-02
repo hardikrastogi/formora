@@ -11,7 +11,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
     <div className="flex min-h-full flex-1 flex-col">
       <SiteHeader />
       <main className="flex-1">{children}</main>
-      <footer className="border-t py-6 text-center text-sm text-muted-foreground">
+      <footer className="site-footer border-t py-6 text-center text-sm text-muted-foreground">
         Formora is open source under the MIT license.
       </footer>
     </div>

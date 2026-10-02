@@ -1,8 +1,16 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { THEME_STORAGE_KEY, ThemeProvider } from "@/components/theme-provider";
 import "@hardikrastogi/react/styles.css";
 import "./globals.css";
+
+// Runs before React hydrates, so there's no flash of the wrong theme on
+// load. Light is the hard default: a stored choice is the only thing that
+// ever adds the .dark class — this never checks prefers-color-scheme.
+const NO_FLASH_THEME_SCRIPT = `(function(){try{if(localStorage.getItem(${JSON.stringify(
+  THEME_STORAGE_KEY,
+)})==="dark"){document.documentElement.classList.add("dark")}}catch(e){}})();`;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,9 +38,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: NO_FLASH_THEME_SCRIPT }} />
+      </head>
       <body className="flex h-full min-h-full flex-col">
-        {children}
-        <Toaster position="bottom-right" />
+        <ThemeProvider>
+          {children}
+          <Toaster position="bottom-right" />
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -52,6 +52,7 @@ function contentSecurityPolicy(frameAncestors: string): string {
 }
 
 const nextConfig: NextConfig = {
+  devIndicators: false,
   async headers() {
     return [
       {

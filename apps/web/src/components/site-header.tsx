@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AuthNav } from "./auth-nav";
+import { DarkModeToggle } from "./dark-mode-toggle";
 
 // Docs and Playground are developer-facing pages — a different audience
 // from form creators — so they stay live at their own URLs but are left out
@@ -11,13 +12,14 @@ import { AuthNav } from "./auth-nav";
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur">
+    <header className="site-header sticky top-0 z-40 border-b bg-background/90 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
         <Link href="/" className="text-lg font-bold tracking-tight">
           Formora
         </Link>
-        <nav aria-label="Main" className="flex min-w-0 items-center gap-5 text-sm">
+        <nav aria-label="Main" className="flex min-w-0 items-center gap-4 text-sm">
           <AuthNav />
+          <DarkModeToggle />
         </nav>
       </div>
     </header>
