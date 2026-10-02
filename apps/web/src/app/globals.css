@@ -205,14 +205,22 @@ body:has(.home-page) .site-footer {
   border: 1px solid color-mix(in oklch, var(--border), transparent 60%);
   transition: background-color 0.4s ease;
 }
-.hero-boxes > div:hover {
-  /* var(--hero-box-hover), not var(--foreground) (a dark charcoal, not true
-     black/white) — .hero-blend's mix-blend-mode: difference needs an exact
-     black/white backdrop to invert text cleanly; anything else leaves it
-     gray. Black in light mode, white in dark mode (see the :root/.dark
-     definitions of --hero-box-hover above). */
-  background-color: var(--hero-box-hover);
-  transition-duration: 0.2s;
+/* Touch devices have no real hover: a tap fires :hover and it often sticks
+   until something else is tapped, since there's no pointer to "leave" with.
+   Scoping this to devices with an actual hovering pointer keeps the grid's
+   static line pattern on mobile (unchanged) while dropping the per-cell
+   cursor-reactive fill, which would otherwise look like a stuck, buggy mess
+   of randomly-lit boxes after scrolling/tapping around the hero. */
+@media (hover: hover) and (pointer: fine) {
+  .hero-boxes > div:hover {
+    /* var(--hero-box-hover), not var(--foreground) (a dark charcoal, not
+       true black/white) — .hero-blend's mix-blend-mode: difference needs an
+       exact black/white backdrop to invert text cleanly; anything else
+       leaves it gray. Black in light mode, white in dark mode (see the
+       :root/.dark definitions of --hero-box-hover above). */
+    background-color: var(--hero-box-hover);
+    transition-duration: 0.2s;
+  }
 }
 
 /* The box-grid's hover highlight (.hero-boxes > div:hover, above) is the same
