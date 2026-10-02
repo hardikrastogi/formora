@@ -1,0 +1,104 @@
+.mobile-nav-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.mobile-nav-trigger:hover {
+  background: var(--muted);
+}
+
+.mobile-nav-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: flex-end;
+  background: color-mix(in oklch, var(--foreground), transparent 60%);
+  animation: mobile-nav-fade-in 0.2s ease;
+}
+
+.mobile-nav-panel {
+  position: relative;
+  width: min(80vw, 18rem);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.25rem 1rem;
+  background: var(--background);
+  border-left: 1px solid var(--border);
+  animation: mobile-nav-slide-in 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mobile-nav-close {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.mobile-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mobile-nav-list a {
+  display: block;
+  padding: 0.75rem 0.6rem;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--foreground);
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.mobile-nav-list a:hover {
+  background: var(--muted);
+}
+.mobile-nav-list a[aria-current="page"] {
+  background: var(--foreground);
+  color: var(--background);
+}
+
+@keyframes mobile-nav-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes mobile-nav-slide-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-nav-backdrop,
+  .mobile-nav-panel {
+    animation: none;
+  }
+}
